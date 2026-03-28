@@ -6,7 +6,7 @@
 // Get key: https://app.hex.tech → Settings → API
 // Docs: https://learn.hex.tech/docs/api/api-reference
 // ─────────────────────────────────────────────────────────
-const fetch = require("node-fetch");
+// const fetch = require("node-fetch");
 
 const HEX_BASE = "https://app.hex.tech/api/v1";
 

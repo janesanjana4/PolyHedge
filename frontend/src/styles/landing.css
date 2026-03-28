@@ -1,0 +1,926 @@
+/* ── Landing page styles ─────────────────────────────────────────────────── */
+
+/* Constellation canvas */
+#constellation-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Noise overlay */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+/* Ambient glow top-left */
+body::after {
+    content: "";
+    position: fixed;
+    top: -20%;
+    left: -10%;
+    width: 70%;
+    height: 70%;
+    background: radial-gradient(
+        ellipse at top left,
+        rgba(198, 161, 91, 0.07) 0%,
+        transparent 65%
+    );
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* ── Navbar ── */
+.nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    padding: 0 3rem;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 0.5px solid rgba(198, 161, 91, 0.28);
+    backdrop-filter: blur(20px);
+    background: rgba(7, 7, 13, 0.8);
+    box-shadow: 0 1px 40px rgba(198, 161, 91, 0.06);
+}
+
+.nav-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #c6a15b;
+    animation: pdot 2.5s ease-in-out infinite;
+}
+
+.nav-logo {
+    font-family: "Cormorant Garant", serif;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--cream);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 2.5rem;
+    list-style: none;
+}
+
+.nav-links a {
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--cdim);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.nav-links a:hover {
+    color: #c6a15b;
+}
+
+.nav-bal {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.78rem;
+    color: #c6a15b;
+    letter-spacing: 0.05em;
+    background: rgba(198, 161, 91, 0.07);
+    padding: 6px 14px;
+    border: 0.5px solid rgba(198, 161, 91, 0.28);
+}
+
+.nav-cta {
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: #c6a15b;
+    border: none;
+    padding: 9px 22px;
+    cursor: pointer;
+    font-family: "DM Sans", sans-serif;
+    font-weight: 600;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-cta:hover {
+    background: #e2bc72;
+}
+
+/* ── Win popup ── */
+.win-popup {
+    position: fixed;
+    top: 80px;
+    right: 2rem;
+    z-index: 500;
+    background: var(--bg2);
+    border: 0.5px solid rgba(52, 211, 153, 0.4);
+    padding: 1.1rem 1.5rem;
+    min-width: 300px;
+    max-width: 380px;
+}
+
+.win-popup::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #34d399, transparent);
+}
+
+/* ── Hero ── */
+.hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: 8rem 3rem 4rem;
+    gap: 4rem;
+    position: relative;
+    z-index: 1;
+}
+
+.hero::after {
+    content: "";
+    position: absolute;
+    top: 20%;
+    right: 0;
+    width: 50%;
+    height: 60%;
+    background: radial-gradient(
+        ellipse at center right,
+        rgba(198, 161, 91, 0.08) 0%,
+        transparent 70%
+    );
+    pointer-events: none;
+}
+
+.hero-eyebrow {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    color: #c6a15b;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hero-eyebrow::before {
+    content: "";
+    display: block;
+    width: 32px;
+    height: 0.5px;
+    background: #c6a15b;
+}
+
+.hero-title {
+    font-family: "Cormorant Garant", serif;
+    font-size: clamp(3rem, 5.5vw, 5.5rem);
+    font-weight: 300;
+    line-height: 1.05;
+    margin-bottom: 1.5rem;
+    color: var(--cream);
+}
+
+.hero-body {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: var(--cdim);
+    max-width: 460px;
+    margin-bottom: 1.75rem;
+}
+
+/* ── Streak bar ── */
+.streak-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 2rem;
+    padding: 11px 16px;
+    border: 0.5px solid rgba(198, 161, 91, 0.28);
+    background: rgba(198, 161, 91, 0.04);
+}
+
+.flame {
+    font-size: 0.85rem;
+    opacity: 0.18;
+    transition: opacity 0.3s;
+}
+
+.flame.lit {
+    opacity: 1;
+    animation: flicker 1.2s ease-in-out infinite alternate;
+}
+
+/* ── Buttons ── */
+.btn-primary {
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: #c6a15b;
+    border: none;
+    padding: 15px 36px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary:hover {
+    background: #e2bc72;
+}
+
+.btn-ghost {
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--cdim);
+    background: none;
+    border: 0.5px solid rgba(255, 255, 255, 0.06);
+    padding: 14px 28px;
+    cursor: pointer;
+    transition: all 0.25s;
+}
+
+.btn-ghost:hover {
+    border-color: #7a6238;
+    color: #c6a15b;
+}
+
+/* ── Hero card ── */
+.hero-card {
+    background: var(--bg2);
+    border: 0.5px solid rgba(198, 161, 91, 0.28);
+    position: relative;
+    animation: float 6s ease-in-out infinite;
+    box-shadow:
+        0 0 70px rgba(198, 161, 91, 0.1),
+        inset 0 0 40px rgba(198, 161, 91, 0.03);
+}
+
+.hero-card::before {
+    content: "";
+    position: absolute;
+    top: -0.5px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        #e2bc72,
+        #c6a15b,
+        #e2bc72,
+        transparent
+    );
+}
+
+.chip {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.68rem;
+    font-weight: 500;
+    padding: 5px 12px;
+    border: 0.5px solid rgba(198, 161, 91, 0.28);
+    background: none;
+    color: var(--cdim);
+    cursor: pointer;
+    transition: all 0.18s;
+}
+
+.chip.active,
+.chip:hover {
+    background: rgba(198, 161, 91, 0.14);
+    border-color: #c6a15b;
+    color: #c6a15b;
+}
+
+.chip-custom {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.68rem;
+    background: none;
+    border: 0.5px solid rgba(255, 255, 255, 0.06);
+    color: var(--cdim);
+    width: 64px;
+    padding: 5px 8px;
+    text-align: center;
+    outline: none;
+}
+
+.odds-side {
+    padding: 1rem;
+    border: 0.5px solid;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.odds-side.yes {
+    border-color: rgba(52, 211, 153, 0.2);
+}
+.odds-side.yes:hover,
+.odds-side.yes.sel {
+    border-color: rgba(52, 211, 153, 0.65);
+    background: rgba(52, 211, 153, 0.06);
+}
+.odds-side.no {
+    border-color: rgba(248, 113, 113, 0.2);
+}
+.odds-side.no:hover,
+.odds-side.no.sel {
+    border-color: rgba(248, 113, 113, 0.65);
+    background: rgba(248, 113, 113, 0.06);
+}
+
+.odds-bg {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.place-btn {
+    width: 100%;
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: #c6a15b;
+    border: none;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+}
+
+.place-btn:hover {
+    background: #e2bc72;
+}
+
+/* ── Ticker ── */
+.ticker-wrap {
+    border-top: 0.5px solid rgba(198, 161, 91, 0.28);
+    border-bottom: 0.5px solid rgba(198, 161, 91, 0.28);
+    padding: 11px 0;
+    overflow: hidden;
+    white-space: nowrap;
+    background: rgba(198, 161, 91, 0.02);
+    position: relative;
+    z-index: 1;
+}
+
+.ticker-track {
+    display: inline-flex;
+    gap: 3rem;
+    animation: tick 28s linear infinite;
+}
+
+/* ── Sections ── */
+section {
+    padding: 6rem 3rem;
+    position: relative;
+    z-index: 1;
+}
+
+.sec-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #c6a15b;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sec-label::after {
+    content: "";
+    flex: 1;
+    height: 0.5px;
+    background: rgba(198, 161, 91, 0.28);
+    max-width: 60px;
+}
+
+.sec-title {
+    font-family: "Cormorant Garant", serif;
+    font-size: clamp(2rem, 3.5vw, 3.2rem);
+    font-weight: 300;
+    line-height: 1.15;
+    color: var(--cream);
+    margin-bottom: 1rem;
+}
+
+/* ── Filter buttons ── */
+.filter-btn {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 7px 16px;
+    border: 0.5px solid rgba(255, 255, 255, 0.06);
+    background: none;
+    color: var(--cdim);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-btn.active,
+.filter-btn:hover {
+    border-color: #7a6238;
+    color: #c6a15b;
+    background: rgba(198, 161, 91, 0.06);
+}
+
+/* ── Markets grid ── */
+.markets-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: rgba(198, 161, 91, 0.28);
+}
+
+.market-card {
+    background: var(--bg);
+    padding: 1.75rem;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    border-top: 2px solid transparent;
+    transition:
+        background 0.2s,
+        border-color 0.2s;
+}
+
+.market-card:hover {
+    border-top-color: #7a6238;
+}
+
+.market-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--bg2);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.market-card:hover::before {
+    opacity: 1;
+}
+
+.market-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+.m-bar-wrap {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+}
+
+.m-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #7a6238, #c6a15b);
+    transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.m-bet-yes {
+    border: 0.5px solid rgba(52, 211, 153, 0.25);
+    color: #34d399;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 8px 10px;
+    background: none;
+    cursor: pointer;
+    transition: all 0.18s;
+    font-weight: 500;
+}
+
+.m-bet-yes:hover {
+    background: rgba(52, 211, 153, 0.1);
+    border-color: rgba(52, 211, 153, 0.5);
+}
+
+.m-bet-no {
+    border: 0.5px solid rgba(248, 113, 113, 0.25);
+    color: #f87171;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 8px 10px;
+    background: none;
+    cursor: pointer;
+    transition: all 0.18s;
+    font-weight: 500;
+}
+
+.m-bet-no:hover {
+    background: rgba(248, 113, 113, 0.1);
+    border-color: rgba(248, 113, 113, 0.5);
+}
+
+/* ── Leaderboard ── */
+.lb-section {
+    background: var(--bg2);
+    border-top: 0.5px solid rgba(198, 161, 91, 0.28);
+    border-bottom: 0.5px solid rgba(198, 161, 91, 0.28);
+}
+
+.lb-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+}
+
+.lb-table th {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--cdim);
+    padding: 0.75rem 0;
+    border-bottom: 0.5px solid rgba(198, 161, 91, 0.28);
+    text-align: left;
+    font-weight: 400;
+}
+
+.lb-table td {
+    padding: 0.9rem 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.72rem;
+    color: var(--cdim);
+    vertical-align: middle;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ── Bet feed ── */
+.bet-feed {
+    background: var(--bg3);
+    border: 0.5px solid rgba(198, 161, 91, 0.28);
+    position: relative;
+}
+
+.bet-feed::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #c6a15b, transparent);
+}
+
+.feed-item {
+    padding: 0.75rem 1.25rem;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* ── How it works ── */
+.how-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5rem;
+    align-items: center;
+}
+
+.step {
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    gap: 1.5rem;
+    padding: 2rem 0;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
+    transition: all 0.2s;
+}
+
+.step:first-child {
+    border-top: 0.5px solid rgba(255, 255, 255, 0.06);
+}
+
+.step:hover {
+    padding-left: 0.5rem;
+    border-bottom-color: #7a6238;
+}
+
+/* ── Probability visual ── */
+.prob-visual {
+    background: var(--bg2);
+    border: 0.5px solid rgba(198, 161, 91, 0.28);
+    padding: 2.5rem;
+    position: relative;
+    box-shadow: 0 0 40px rgba(198, 161, 91, 0.07);
+}
+
+.prob-visual::before {
+    content: "";
+    position: absolute;
+    top: -0.5px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        #e2bc72,
+        #c6a15b,
+        #e2bc72,
+        transparent
+    );
+}
+
+.prob-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.72rem;
+}
+
+.prob-row:last-child {
+    border-bottom: none;
+}
+
+/* ── Stats ── */
+.stats-section {
+    background: var(--bg2);
+    border-top: 0.5px solid rgba(198, 161, 91, 0.28);
+    border-bottom: 0.5px solid rgba(198, 161, 91, 0.28);
+    padding: 4rem 3rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: rgba(198, 161, 91, 0.28);
+}
+
+.stat-item {
+    background: var(--bg2);
+    padding: 2rem 2.5rem;
+    transition: background 0.2s;
+}
+
+.stat-item:hover {
+    background: rgba(198, 161, 91, 0.03);
+}
+
+/* ── Categories ── */
+.cats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    margin-top: 2rem;
+}
+
+.cat-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 0.5px solid rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.03);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    border-radius: 2px;
+}
+
+.cat-pill:hover {
+    border-color: #7a6238;
+    background: rgba(198, 161, 91, 0.07);
+}
+
+/* ── CTA section ── */
+.cta-section {
+    text-align: center;
+    padding: 8rem 3rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.cta-section::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(
+        circle,
+        rgba(198, 161, 91, 0.07) 0%,
+        transparent 70%
+    );
+    pointer-events: none;
+}
+
+.cta-input-row {
+    display: flex;
+    max-width: 420px;
+    margin: 0 auto;
+    border: 0.5px solid rgba(198, 161, 91, 0.28);
+}
+
+.cta-input {
+    flex: 1;
+    background: var(--bg2);
+    border: none;
+    padding: 15px 20px;
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.85rem;
+    color: var(--cream);
+    outline: none;
+}
+
+.cta-submit {
+    background: #c6a15b;
+    color: var(--bg);
+    border: none;
+    padding: 15px 28px;
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.cta-submit:hover {
+    background: #e2bc72;
+}
+
+/* ── Slot machine ── */
+.slot-machine {
+    display: flex;
+    align-items: stretch;
+    position: relative;
+    background: linear-gradient(180deg, #1a1408 0%, #0d0a04 100%);
+    border: 1.5px solid #7a6238;
+    box-shadow:
+        0 0 50px rgba(198, 161, 91, 0.18),
+        inset 0 1px 0 rgba(226, 188, 114, 0.1);
+    width: 100%;
+}
+
+.slot-machine::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 30%;
+    background: linear-gradient(to bottom, rgba(13, 10, 4, 0.92), transparent);
+    pointer-events: none;
+    z-index: 10;
+}
+
+.slot-machine::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30%;
+    background: linear-gradient(to top, rgba(13, 10, 4, 0.92), transparent);
+    pointer-events: none;
+    z-index: 10;
+}
+
+.slot-reel {
+    flex: 1;
+    height: 90px;
+    overflow: hidden;
+    position: relative;
+}
+
+.slot-reel:not(:last-child) {
+    border-right: 1px solid rgba(198, 161, 91, 0.25);
+}
+
+.reel-strip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    will-change: transform;
+}
+
+.reel-word {
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Cormorant Garant", serif;
+    font-size: clamp(1.6rem, 3vw, 2.6rem);
+    font-weight: 500;
+    font-style: italic;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    color: #7a6238;
+    opacity: 0.3;
+    transition:
+        color 0.2s,
+        opacity 0.2s,
+        text-shadow 0.2s;
+}
+
+.reel-word.is-target {
+    color: #e2bc72;
+    opacity: 1;
+    text-shadow: 0 0 28px rgba(226, 188, 114, 0.65);
+}
+
+.win-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 90px;
+    pointer-events: none;
+    z-index: 1;
+    border-top: 1px solid rgba(198, 161, 91, 0.4);
+    border-bottom: 1px solid rgba(198, 161, 91, 0.4);
+    background: rgba(198, 161, 91, 0.03);
+}
+
+.slot-machine.jackpot {
+    animation: jackpot-border 0.35s ease-in-out infinite !important;
+}
+
+.slot-machine.glowing {
+    box-shadow:
+        0 0 60px rgba(198, 161, 91, 0.45),
+        0 0 0 1.5px rgba(226, 188, 114, 0.5);
+    border-color: rgba(226, 188, 114, 0.6);
+}
+
+.win-line.jackpot-line {
+    animation: jackpot-line 0.35s ease-in-out infinite;
+}
+
+.slot-lever {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #7a6238;
+    background: none;
+    border: 0.5px solid #7a6238;
+    padding: 6px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.slot-lever:hover {
+    border-color: #c6a15b;
+    color: #c6a15b;
+    background: rgba(198, 161, 91, 0.06);
+}
+
+.slot-lever.spinning {
+    color: #e2bc72;
+    border-color: #e2bc72;
+    animation: lever-pulse 0.4s ease-in-out infinite alternate;
+}

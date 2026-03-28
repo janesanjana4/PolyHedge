@@ -4,7 +4,7 @@
 // Make sure you have LAVA_API_KEY in your .env
 // ─────────────────────────────────────────────────────────
 
-const fetch = require("node-fetch");
+// const fetch = require("node-fetch");
 
 const LAVA_FORWARD = "https://api.lavapayments.com/v1/forward";
 

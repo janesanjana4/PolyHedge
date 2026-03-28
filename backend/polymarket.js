@@ -3,7 +3,7 @@
 // Polymarket Gamma API — robust search (hybrid)
 // ─────────────────────────────────────────────────────────
 
-const fetch = require("node-fetch");
+// const fetch = require("node-fetch");
 
 const GAMMA_BASE = "https://gamma-api.polymarket.com";
 

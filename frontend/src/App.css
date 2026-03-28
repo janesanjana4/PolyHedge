@@ -1,0 +1,159 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garant:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=JetBrains+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap");
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --bg: #07070d;
+    --bg2: #0d0d18;
+    --bg3: #111120;
+    --cream: #ede8d9;
+    --cdim: #8c8676;
+    --gold: #c6a15b;
+    --gold-bright: #e2bc72;
+    --gold-dark: #7a6238;
+    --gold-border: rgba(198, 161, 91, 0.28);
+    --yes: #34d399;
+    --no: #f87171;
+}
+
+body {
+    background: var(--bg);
+    color: var(--cream);
+    font-family: "DM Sans", sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.mono {
+    font-family: "JetBrains Mono", monospace;
+}
+.serif {
+    font-family: "Cormorant Garant", serif;
+}
+
+.fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+        opacity 0.7s ease,
+        transform 0.7s ease;
+}
+.fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+footer {
+    border-top: 0.5px solid var(--gold-border);
+    padding: 2.5rem 3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.footer-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+}
+.footer-links a {
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--cdim);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+.footer-links a:hover {
+    color: var(--gold);
+}
+
+::-webkit-scrollbar {
+    width: 4px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--gold-border);
+    border-radius: 2px;
+}
+
+@keyframes pdot {
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(0.7);
+    }
+}
+@keyframes float {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}
+@keyframes flicker {
+    0% {
+        transform: scale(1);
+    }
+    100% {
+        transform: scale(1.18);
+    }
+}
+@keyframes tick {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-50%);
+    }
+}
+@keyframes jackpot-border {
+    0%,
+    100% {
+        box-shadow:
+            0 0 50px rgba(198, 161, 91, 0.18),
+            inset 0 1px 0 rgba(226, 188, 114, 0.1);
+    }
+    50% {
+        box-shadow:
+            0 0 120px rgba(226, 188, 114, 0.95),
+            0 0 0 3px rgba(226, 188, 114, 0.8),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+}
+@keyframes jackpot-line {
+    0%,
+    100% {
+        background: rgba(198, 161, 91, 0.03);
+        border-color: rgba(198, 161, 91, 0.4);
+    }
+    50% {
+        background: rgba(226, 188, 114, 0.2);
+        border-color: rgba(226, 188, 114, 0.95);
+    }
+}
+@keyframes lever-pulse {
+    0% {
+        opacity: 0.7;
+    }
+    100% {
+        opacity: 1;
+    }
+}
