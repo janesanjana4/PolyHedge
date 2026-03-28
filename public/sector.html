@@ -36,7 +36,6 @@
                 font-family: "DM Sans", sans-serif;
                 min-height: 100vh;
             }
-
             nav {
                 position: fixed;
                 top: 0;
@@ -93,7 +92,6 @@
             .back:hover {
                 color: var(--gold);
             }
-
             .header {
                 padding: 5rem 2.5rem 2rem;
                 background: var(--bg2);
@@ -183,8 +181,6 @@
                 color: var(--no);
                 border-color: rgba(248, 113, 113, 0.35);
             }
-
-            /* SECTOR TABS */
             .tabs {
                 background: var(--bg2);
                 border-bottom: 0.5px solid var(--border-warm);
@@ -216,8 +212,6 @@
                 color: var(--gold);
                 border-bottom-color: var(--gold);
             }
-
-            /* RAW JSON PANEL */
             .raw-panel {
                 margin: 0 2.5rem;
                 margin-top: 1.5rem;
@@ -260,8 +254,6 @@
                 white-space: pre-wrap;
                 word-break: break-all;
             }
-
-            /* MARKETS GRID */
             .grid-wrap {
                 padding: 1.5rem 2.5rem 4rem;
             }
@@ -306,8 +298,6 @@
                     transform: rotate(360deg);
                 }
             }
-
-            /* MARKET CARD */
             .card {
                 background: var(--bg);
                 padding: 1.5rem;
@@ -392,13 +382,6 @@
                 padding-top: 0.75rem;
                 border-top: 0.5px solid var(--border);
             }
-            .card-id {
-                font-family: "JetBrains Mono", monospace;
-                font-size: 0.55rem;
-                color: var(--cream-dim);
-                opacity: 0.5;
-                letter-spacing: 0.04em;
-            }
             .card-end {
                 font-family: "JetBrains Mono", monospace;
                 font-size: 0.58rem;
@@ -434,7 +417,6 @@
                 background: rgba(248, 113, 113, 0.1);
                 border-color: rgba(248, 113, 113, 0.5);
             }
-
             .error-box {
                 margin: 1.5rem 2.5rem;
                 padding: 1.25rem 1.5rem;
@@ -449,14 +431,202 @@
             .error-box.visible {
                 display: block;
             }
+
+            /* ── FLOATING CHAT ── */
+            .chat-bubble {
+                position: fixed;
+                bottom: 1.5rem;
+                right: 1.5rem;
+                z-index: 999;
+            }
+            .chat-toggle {
+                width: 52px;
+                height: 52px;
+                border-radius: 50%;
+                background: var(--gold);
+                border: none;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.2rem;
+                box-shadow: 0 4px 24px rgba(198, 161, 91, 0.4);
+                transition: all 0.2s;
+                margin-left: auto;
+            }
+            .chat-toggle:hover {
+                background: var(--gold-bright);
+                transform: scale(1.05);
+            }
+            .chat-window {
+                position: absolute;
+                bottom: 64px;
+                right: 0;
+                width: 320px;
+                background: var(--bg2);
+                border: 0.5px solid var(--border-warm);
+                box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+                display: none;
+                flex-direction: column;
+                overflow: hidden;
+            }
+            .chat-window.open {
+                display: flex;
+            }
+            .chat-window::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: linear-gradient(
+                    90deg,
+                    transparent,
+                    var(--gold),
+                    transparent
+                );
+            }
+            .chat-head {
+                padding: 0.75rem 1rem;
+                border-bottom: 0.5px solid var(--border);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .chat-head-title {
+                font-family: "JetBrains Mono", monospace;
+                font-size: 0.65rem;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                color: var(--gold);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .chat-head-title::before {
+                content: "";
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: var(--yes);
+                animation: blink 1.5s ease-in-out infinite;
+            }
+            .chat-close {
+                background: none;
+                border: none;
+                color: var(--cream-dim);
+                cursor: pointer;
+                font-size: 0.9rem;
+                padding: 2px 4px;
+                transition: color 0.2s;
+            }
+            .chat-close:hover {
+                color: var(--gold);
+            }
+            .chat-messages {
+                flex: 1;
+                padding: 0.75rem 1rem;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+                gap: 0.6rem;
+                min-height: 180px;
+                max-height: 280px;
+            }
+            .msg {
+                font-family: "JetBrains Mono", monospace;
+                font-size: 0.68rem;
+                line-height: 1.65;
+                padding: 0.6rem 0.8rem;
+                border-radius: 2px;
+                max-width: 92%;
+            }
+            .msg.user {
+                background: rgba(198, 161, 91, 0.1);
+                border: 0.5px solid var(--border-warm);
+                color: var(--cream);
+                align-self: flex-end;
+            }
+            .msg.ai {
+                background: var(--bg3);
+                border: 0.5px solid var(--border);
+                color: var(--cream-dim);
+                align-self: flex-start;
+                white-space: pre-wrap;
+            }
+            .msg.ai strong {
+                color: var(--gold);
+            }
+            .msg.thinking {
+                color: var(--gold-dim);
+                border-color: transparent;
+                background: none;
+                font-style: italic;
+                animation: pulse-opacity 1s ease-in-out infinite alternate;
+            }
+            @keyframes pulse-opacity {
+                from {
+                    opacity: 0.4;
+                }
+                to {
+                    opacity: 1;
+                }
+            }
+            .chat-hint {
+                padding: 0.5rem 1rem;
+                font-family: "JetBrains Mono", monospace;
+                font-size: 0.58rem;
+                color: var(--gold-dim);
+                letter-spacing: 0.06em;
+                border-bottom: 0.5px solid var(--border);
+            }
+            .chat-input-row {
+                display: flex;
+                border-top: 0.5px solid var(--border-warm);
+            }
+            .chat-input {
+                flex: 1;
+                background: transparent;
+                border: none;
+                padding: 0.75rem 1rem;
+                font-family: "JetBrains Mono", monospace;
+                font-size: 0.7rem;
+                color: var(--cream);
+                outline: none;
+                resize: none;
+            }
+            .chat-input::placeholder {
+                color: var(--cream-dim);
+                opacity: 0.5;
+            }
+            .chat-send {
+                background: var(--gold);
+                border: none;
+                color: #000;
+                font-family: "JetBrains Mono", monospace;
+                font-size: 0.65rem;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                padding: 0 1rem;
+                cursor: pointer;
+                transition: background 0.2s;
+            }
+            .chat-send:hover {
+                background: var(--gold-bright);
+            }
+            .chat-send:disabled {
+                opacity: 0.4;
+                cursor: not-allowed;
+            }
         </style>
     </head>
     <body>
         <nav>
-            <a class="nav-logo" href="PolymarketLandingPage.html">
-                <div class="nav-dot"></div>
-                Poly Hedge
-            </a>
+            <a class="nav-logo" href="PolymarketLandingPage.html"
+                ><div class="nav-dot"></div>
+                Poly Hedge</a
+            >
             <a class="back" href="PolymarketLandingPage.html"
                 >← Back to Markets</a
             >
@@ -475,7 +645,6 @@
 
         <div class="tabs" id="tabs"></div>
 
-        <!-- RAW API RESPONSE PANEL — proves the call works -->
         <div class="raw-panel">
             <div class="raw-header">
                 <span class="raw-label">⬡ Raw API Response</span>
@@ -501,10 +670,54 @@
             </div>
         </div>
 
+        <!-- FLOATING CHAT -->
+        <div class="chat-bubble">
+            <div class="chat-window" id="chatWindow">
+                <div class="chat-head">
+                    <span class="chat-head-title">K2 Alpha Analyst</span>
+                    <button class="chat-close" onclick="toggleChat()">✕</button>
+                </div>
+                <div class="chat-hint">
+                    Ask about any market or your trade idea
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="msg ai">
+                        Hey — tell me your market view and I'll find the alpha.
+                        Try:
+                        <strong
+                            >"I think the Fed cuts rates before July"</strong
+                        >
+                    </div>
+                </div>
+                <div class="chat-input-row">
+                    <textarea
+                        class="chat-input"
+                        id="chatInput"
+                        rows="1"
+                        placeholder="Your market view…"
+                        onkeydown="handleKey(event)"
+                    ></textarea>
+                    <button
+                        class="chat-send"
+                        id="chatSend"
+                        onclick="sendMessage()"
+                    >
+                        ASK
+                    </button>
+                </div>
+            </div>
+            <button
+                class="chat-toggle"
+                onclick="toggleChat()"
+                title="Ask K2 Analyst"
+            >
+                ⬡
+            </button>
+        </div>
+
         <script>
             const API_BASE = "http://localhost:3001";
 
-            // Sectors config
             const SECTORS = [
                 { key: "all", label: "All", keyword: "", icon: "⬡" },
                 {
@@ -529,11 +742,9 @@
                 { key: "tech", label: "Tech", keyword: "ai", icon: "💻" },
             ];
 
-            // Read sector from URL param e.g. sector.html?sector=crypto
             const params = new URLSearchParams(window.location.search);
             let activeSector = params.get("sector") || "all";
 
-            // Build tabs
             const tabsEl = document.getElementById("tabs");
             SECTORS.forEach((s) => {
                 const btn = document.createElement("button");
@@ -546,11 +757,9 @@
 
             function switchSector(key) {
                 activeSector = key;
-                // Update URL without reload
                 const url = new URL(window.location);
                 url.searchParams.set("sector", key);
                 window.history.pushState({}, "", url);
-                // Update tabs
                 document.querySelectorAll(".tab").forEach((t, i) => {
                     t.className =
                         "tab" + (SECTORS[i].key === key ? " active" : "");
@@ -558,6 +767,7 @@
                 loadMarkets(key);
             }
 
+            // ── These match the RAW Polymarket fields (works without backend normalizing) ──
             function formatVol(n) {
                 n = parseFloat(n) || 0;
                 if (n >= 1_000_000)
@@ -589,7 +799,6 @@
                 document.getElementById("grid").innerHTML =
                     '<div class="loading"><span class="spinner"></span>Calling Polymarket API…</div>';
 
-                // Build the URL
                 const keyword = sector.keyword;
                 const apiUrl = `${API_BASE}/api/markets?limit=12${keyword ? "&keyword=" + encodeURIComponent(keyword) : ""}`;
                 document.getElementById("raw-url").textContent = apiUrl;
@@ -598,7 +807,6 @@
                     const res = await fetch(apiUrl);
                     const data = await res.json();
 
-                    // Show raw response (first 800 chars so it's readable)
                     const rawStr = JSON.stringify(data, null, 2);
                     document.getElementById("raw-body").textContent =
                         rawStr.length > 900
@@ -619,7 +827,6 @@
                         return;
                     }
 
-                    // Success
                     document.getElementById("api-badge").textContent =
                         "✓ API call successful · " +
                         data.markets.length +
@@ -633,19 +840,28 @@
                     const grid = document.getElementById("grid");
                     grid.innerHTML = data.markets
                         .map((m) => {
-                            const prices = (() => {
-                                try {
-                                    return JSON.parse(
-                                        m.outcomePrices || "[0.5,0.5]",
-                                    );
-                                } catch (_) {
-                                    return [0.5, 0.5];
-                                }
-                            })();
-                            const yesPct = Math.round(
-                                parseFloat(prices[0]) * 100,
-                            );
-                            const vol = formatVol(m.volume);
+                            // Support BOTH raw Polymarket fields AND pre-normalized backend fields
+                            let yesPct, vol;
+                            if (m.yesPct !== undefined) {
+                                // Backend already normalized
+                                yesPct = m.yesPct;
+                                vol = m.volumeFmt || "$0";
+                            } else {
+                                // Raw Polymarket fields
+                                const prices = (() => {
+                                    try {
+                                        return JSON.parse(
+                                            m.outcomePrices || "[0.5,0.5]",
+                                        );
+                                    } catch (_) {
+                                        return [0.5, 0.5];
+                                    }
+                                })();
+                                yesPct = Math.round(
+                                    parseFloat(prices[0]) * 100,
+                                );
+                                vol = formatVol(m.volume);
+                            }
                             const end = formatDate(m.endDate);
                             return `
         <div class="card">
@@ -665,12 +881,10 @@
               <button class="yn-btn yn-no">NO ▼</button>
             </div>
           </div>
-        </div>
-      `;
+        </div>`;
                         })
                         .join("");
 
-                    // Animate bars
                     setTimeout(() => {
                         document.querySelectorAll(".prob-bar").forEach((b) => {
                             b.style.width = b.dataset.prob + "%";
@@ -684,15 +898,132 @@
                         "Error: " + err.message;
                     document.getElementById("error-box").className =
                         "error-box visible";
-                    document.getElementById("error-box").innerHTML = `
-      ✗ Could not reach backend<br><br>
-      Make sure your server is running:<br>
-      <strong>cd PolyHedge && node server.js</strong><br><br>
-      Then refresh this page.
-    `;
+                    document.getElementById("error-box").innerHTML =
+                        `✗ Could not reach backend<br><br>Make sure server is running:<br><strong>node server.js</strong>`;
                     document.getElementById("grid").innerHTML =
                         '<div class="loading" style="color:var(--no)">⬡ Server offline — run: node server.js</div>';
                 }
+            }
+
+            // ── CHAT ────────────────────────────────────────────────
+            function toggleChat() {
+                const w = document.getElementById("chatWindow");
+                w.classList.toggle("open");
+                if (w.classList.contains("open"))
+                    document.getElementById("chatInput").focus();
+            }
+
+            function handleKey(e) {
+                if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            }
+
+            function addMsg(text, type) {
+                const msgs = document.getElementById("chatMessages");
+                const div = document.createElement("div");
+                div.className = "msg " + type;
+                div.innerHTML = text;
+                msgs.appendChild(div);
+                msgs.scrollTop = msgs.scrollHeight;
+                return div;
+            }
+
+            async function sendMessage() {
+                const input = document.getElementById("chatInput");
+                const send = document.getElementById("chatSend");
+                const text = input.value.trim();
+                if (!text) return;
+                input.value = "";
+                send.disabled = true;
+                addMsg(text, "user");
+                const thinking = addMsg("⬡ Analyzing…", "thinking");
+
+                try {
+                    const mRes = await fetch(
+                        `${API_BASE}/api/markets?keyword=${encodeURIComponent(text)}&limit=3`,
+                    );
+                    const mData = await mRes.json();
+                    const markets = mData.markets || [];
+
+                    if (!markets.length) {
+                        thinking.remove();
+                        addMsg(
+                            "No matching Polymarket markets found. Try a different topic.",
+                            "ai",
+                        );
+                        send.disabled = false;
+                        return;
+                    }
+
+                    const top = markets[0];
+                    const yesPct =
+                        top.yesPct !== undefined
+                            ? top.yesPct
+                            : Math.round(
+                                  parseFloat(
+                                      (() => {
+                                          try {
+                                              return JSON.parse(
+                                                  top.outcomePrices || "[0.5]",
+                                              );
+                                          } catch (_) {
+                                              return [0.5];
+                                          }
+                                      })()[0],
+                                  ) * 100,
+                              );
+
+                    const aRes = await fetch(`${API_BASE}/api/analyze-bet`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            question: top.question,
+                            yesPct,
+                            side: "yes",
+                            amount: 100,
+                        }),
+                    });
+                    const aData = await aRes.json();
+                    thinking.remove();
+
+                    const marketList = markets
+                        .map((m) => {
+                            const pct =
+                                m.yesPct !== undefined
+                                    ? m.yesPct
+                                    : Math.round(
+                                          parseFloat(
+                                              (() => {
+                                                  try {
+                                                      return JSON.parse(
+                                                          m.outcomePrices ||
+                                                              "[0.5]",
+                                                      );
+                                                  } catch (_) {
+                                                      return [0.5];
+                                                  }
+                                              })()[0],
+                                          ) * 100,
+                                      );
+                            const vol = m.volumeFmt || formatVol(m.volume);
+                            return `<strong>${m.question}</strong> — ${pct}% YES · ${vol}`;
+                        })
+                        .join("<br>");
+
+                    addMsg(
+                        `<strong style="color:var(--gold)">Markets found:</strong><br>${marketList}<br><br>` +
+                            `<strong style="color:var(--gold)">K2 Analysis:</strong><br>${aData.analysis || "No analysis returned"}`,
+                        "ai",
+                    );
+                } catch (err) {
+                    thinking.remove();
+                    addMsg("✗ Server offline — run: node server.js", "ai");
+                }
+
+                send.disabled = false;
+                document.getElementById("chatInput").focus();
             }
 
             // Kick off
