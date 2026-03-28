@@ -40,8 +40,6 @@ async function callLava(
   return data.choices?.[0]?.message?.content || "";
 }
 
-// ── Analyze a prediction market bet ─────────────────────
-// Used by POST /api/analyze-bet
 async function analyzeBet({ question, yesPct, side, amount }) {
   const prob = side === "yes" ? yesPct / 100 : (100 - yesPct) / 100;
   const payout = amount ? (parseFloat(amount) / prob).toFixed(2) : null;
@@ -63,13 +61,8 @@ No preamble.`;
   return callLava(prompt, { model: "gpt-4o-mini", maxTokens: 300 });
 }
 
-// ── K2 Think — deep reasoning (swap model when ready) ────
-// To use K2: change model to "k2-think-v2"
-// Costs more credits but gives step-by-step reasoning
 async function analyzeWithK2(prompt) {
   return callLava(prompt, { model: "gpt-4o-mini", maxTokens: 600 });
-  // TODO: swap to k2-think-v2 once confirmed working
-  // return callLava(prompt, { model: "k2-think-v2", maxTokens: 600 });
 }
 
 module.exports = { callLava, analyzeBet, analyzeWithK2 };
