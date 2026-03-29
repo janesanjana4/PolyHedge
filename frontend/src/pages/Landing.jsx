@@ -160,10 +160,10 @@ export default function Landing() {
       showPopup("Set a stake first.", "↑ Choose a chip above", false);
       return;
     }
-    if (betAmount > balance) {
+    if (betAmount > u.balance) {
       showPopup(
         "Insufficient balance.",
-        `You have $${balance.toFixed(2)}`,
+        `You have $${u.balance.toFixed(2)}`,
         false,
       );
       return;
@@ -172,11 +172,16 @@ export default function Landing() {
     const prob = side === "yes" ? m.yesPct / 100 : m.noPct / 100;
     const payout = parseFloat((betAmount / prob).toFixed(2));
     const win = Math.random() < 0.58;
-    const newBalance = balance - betAmount + (win ? payout : 0);
-    const newStreak = win ? streak + 1 : 0;
+    const newBalance = u.balance - betAmount + (win ? payout : 0);
+    const newStreak = win ? (u.streak ?? 0) + 1 : 0;
     setBalance(newBalance);
     setStreak(newStreak);
-    patchUser({ balance: newBalance, streak: newStreak });
+    patchUser({
+      balance: newBalance,
+      streak: newStreak,
+      wins: (u.wins ?? 0) + (win ? 1 : 0),
+      losses: (u.losses ?? 0) + (win ? 0 : 1),
+    });
     showPopup(
       win ? "You called it right!" : "Better luck next time.",
       win
@@ -196,16 +201,21 @@ export default function Landing() {
       );
       return;
     }
-    if (betAmount <= 0 || betAmount > balance) {
+    if (betAmount <= 0 || betAmount > u.balance) {
       showPopup("Set a stake first.", "↑ Scroll up to pick a chip", false);
       return;
     }
     const win = Math.random() < 0.6;
-    const newBalance = balance - betAmount + (win ? betAmount * 1.7 : 0);
-    const newStreak = win ? streak + 1 : 0;
+    const newBalance = u.balance - betAmount + (win ? betAmount * 1.7 : 0);
+    const newStreak = win ? (u.streak ?? 0) + 1 : 0;
     setBalance(newBalance);
     setStreak(newStreak);
-    patchUser({ balance: newBalance, streak: newStreak });
+    patchUser({
+      balance: newBalance,
+      streak: newStreak,
+      wins: (u.wins ?? 0) + (win ? 1 : 0),
+      losses: (u.losses ?? 0) + (win ? 0 : 1),
+    });
     showPopup(
       win ? "Winner!" : "No luck this time.",
       win ? `+$${(betAmount * 0.7).toFixed(2)} profit` : "Stake settled",

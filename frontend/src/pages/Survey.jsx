@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { saveUser, getUser } from "../lib/userSession";
+import { signupWithAuth0 } from "../lib/authApi";
 
 const SECTORS = [
   { id: "finance", label: "Finance", icon: "📈" },
@@ -13,7 +14,7 @@ const SECTORS = [
   { id: "health", label: "Health", icon: "🏥" },
 ];
 
-const STEPS = ["Identity", "Account", "Interests", "Terms"];
+const STEPS = ["Identity", "Account", "Interests", "Terms", "Secure"];
 
 const FONTS = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garant:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=JetBrains+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
@@ -578,6 +579,13 @@ function validateEmail(val) {
   return null;
 }
 
+function validatePasswordPair(password, confirm) {
+  if (!password) return "Password is required";
+  if (password.length < 8) return "Password must be at least 8 characters";
+  if (password !== confirm) return "Passwords do not match";
+  return null;
+}
+
 export default function PolyHedgeSurvey() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
@@ -587,6 +595,8 @@ export default function PolyHedgeSurvey() {
   }, [navigate]);
   const [animKey, setAnimKey] = useState(0);
   const [done, setDone] = useState(false);
+  const [signupError, setSignupError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const [form, setForm] = useState({
     firstName: "",
@@ -596,6 +606,8 @@ export default function PolyHedgeSurvey() {
     sectors: [],
     termsTrading: false,
     termsAge: false,
+    password: "",
+    confirmPassword: "",
   });
   const [touched, setTouched] = useState({});
   const [errors, setErrors] = useState({});
@@ -654,10 +666,17 @@ export default function PolyHedgeSurvey() {
     if (step === 3) {
       return form.termsTrading && form.termsAge;
     }
+    if (step === 4) {
+      return (
+        form.password.length >= 8 &&
+        form.confirmPassword === form.password
+      );
+    }
     return true;
   };
 
-  const next = () => {
+  const next = async () => {
+    setSignupError(null);
     const errs = validate(form, null);
     if (step === 0) {
       setTouched({ firstName: true, lastName: true, email: true });
@@ -667,12 +686,42 @@ export default function PolyHedgeSurvey() {
       setTouched((t) => ({ ...t, username: true }));
       if (errs.username) return;
     }
-    if (step < 3) {
+    if (step < 4) {
+      if (step === 3 && (!form.termsTrading || !form.termsAge)) return;
       setAnimKey((k) => k + 1);
       setStep((s) => s + 1);
-    } else {
-      saveUser(form);
-      setDone(true);
+      return;
+    }
+    if (step === 4) {
+      if (submitting) return;
+      const pe = validatePasswordPair(form.password, form.confirmPassword);
+      if (pe) {
+        setSignupError(pe);
+        return;
+      }
+      setSubmitting(true);
+      try {
+        await signupWithAuth0({
+          email: form.email.trim(),
+          password: form.password,
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
+          username: form.username,
+          sectors: form.sectors,
+        });
+        saveUser({
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
+          email: form.email.trim(),
+          username: form.username,
+          sectors: form.sectors,
+        });
+        setDone(true);
+      } catch (e) {
+        setSignupError(e.message || "Signup failed");
+      } finally {
+        setSubmitting(false);
+      }
     }
   };
 
@@ -683,7 +732,7 @@ export default function PolyHedgeSurvey() {
     }
   };
 
-  const progress = ((step + (done ? 1 : 0)) / 4) * 100;
+  const progress = ((step + (done ? 1 : 0)) / STEPS.length) * 100;
 
   return (
     <>
@@ -758,7 +807,22 @@ export default function PolyHedgeSurvey() {
                   <Step2 form={form} toggleSector={toggleSector} />
                 )}
                 {step === 3 && <Step3 form={form} set={set} />}
+                {step === 4 && <Step4Password form={form} set={set} />}
               </div>
+              {signupError && step === 4 && (
+                <div
+                  style={{
+                    padding: "0 2rem 0.75rem",
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: "0.65rem",
+                    color: "var(--no)",
+                    letterSpacing: "0.04em",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  ⚠ {signupError}
+                </div>
+              )}
               <div className="ph-card-footer">
                 <button
                   type="button"
@@ -770,10 +834,14 @@ export default function PolyHedgeSurvey() {
                 <button
                   type="button"
                   className="ph-btn-primary"
-                  onClick={next}
-                  disabled={!canAdvance()}
+                  onClick={() => void next()}
+                  disabled={!canAdvance() || submitting}
                 >
-                  {step === 3 ? "⬡  Create Account" : "Continue →"}
+                  {step === 4
+                    ? submitting
+                      ? "Creating…"
+                      : "⬡  Create account"
+                    : "Continue →"}
                 </button>
               </div>
             </div>
@@ -1075,6 +1143,57 @@ function Step3({ form, set }) {
           Both agreements required to continue.
         </p>
       )}
+    </>
+  );
+}
+
+function Step4Password({ form, set }) {
+  const mismatch =
+    form.confirmPassword.length > 0 &&
+    form.password !== form.confirmPassword;
+  const weak = form.password.length > 0 && form.password.length < 8;
+
+  return (
+    <>
+      <p className="ph-step-title">
+        Set your <em>password.</em>
+      </p>
+      <p className="ph-step-sub">
+        This secures your Auth0 account. We never store your password in the
+        browser.
+      </p>
+      <div className="ph-field">
+        <label className="ph-label">
+          Password <span className="ph-required">*</span>
+        </label>
+        <input
+          className={`ph-input${weak ? " error" : form.password.length >= 8 ? " valid" : ""}`}
+          type="password"
+          autoComplete="new-password"
+          placeholder="At least 8 characters"
+          value={form.password}
+          onChange={(e) => set("password", e.target.value)}
+        />
+        {weak && (
+          <p className="ph-error-msg">⚠ Use at least 8 characters</p>
+        )}
+      </div>
+      <div className="ph-field">
+        <label className="ph-label">
+          Confirm password <span className="ph-required">*</span>
+        </label>
+        <input
+          className={`ph-input${mismatch ? " error" : form.confirmPassword && !mismatch && form.password.length >= 8 ? " valid" : ""}`}
+          type="password"
+          autoComplete="new-password"
+          placeholder="Repeat password"
+          value={form.confirmPassword}
+          onChange={(e) => set("confirmPassword", e.target.value)}
+        />
+        {mismatch && (
+          <p className="ph-error-msg">⚠ Passwords do not match</p>
+        )}
+      </div>
     </>
   );
 }
