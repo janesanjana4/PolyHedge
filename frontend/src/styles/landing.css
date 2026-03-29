@@ -388,12 +388,6 @@ a.nav-cta {
     transition: all 0.2s;
 }
 
-.odds-side.bet-locked {
-    cursor: not-allowed;
-    opacity: 0.42;
-    pointer-events: none;
-}
-
 .odds-side.yes {
     border-color: rgba(52, 211, 153, 0.2);
 }

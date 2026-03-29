@@ -218,7 +218,6 @@ export default function Landing() {
 
   const user = getUser();
   const isAuthed = !!user;
-  const betLocked = !isAuthed;
 
   const scrollToHeroMarket = () => {
     document.getElementById("hero-market")?.scrollIntoView({ behavior: "smooth" });
@@ -382,7 +381,6 @@ export default function Landing() {
                   <button
                     key={a}
                     type="button"
-                    disabled={betLocked}
                     className={`chip${betAmount === a ? " active" : ""}`}
                     onClick={() => setBetAmount(a)}
                   >
@@ -393,8 +391,6 @@ export default function Landing() {
                   className="chip-custom"
                   type="number"
                   placeholder="other"
-                  disabled={betLocked}
-                  readOnly={betLocked}
                   onChange={(e) =>
                     setBetAmount(parseFloat(e.target.value) || 0)
                   }
@@ -411,12 +407,11 @@ export default function Landing() {
                 {["yes", "no"].map((s) => (
                   <div
                     key={s}
-                    className={`odds-side ${s}${side === s ? " sel" : ""}${betLocked ? " bet-locked" : ""}`}
-                    onClick={() => !betLocked && setSide(s)}
+                    className={`odds-side ${s}${side === s ? " sel" : ""}`}
+                    onClick={() => setSide(s)}
                     role="button"
-                    tabIndex={betLocked ? -1 : 0}
+                    tabIndex={0}
                     onKeyDown={(e) => {
-                      if (betLocked) return;
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
                         setSide(s);
@@ -473,35 +468,36 @@ export default function Landing() {
                   </div>
                 ))}
               </div>
-              {betLocked && (
-                <p
-                  className="mono"
-                  style={{
-                    fontSize: ".65rem",
-                    letterSpacing: ".06em",
-                    color: "var(--cdim)",
-                    margin: "0 0 1rem",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  Betting is locked until you have an account.{" "}
-                  <Link
-                    to="/signup"
-                    style={{ color: G, textDecoration: "underline" }}
-                  >
-                    Get started
-                  </Link>{" "}
-                  — you will start with paper balance on your dashboard.
-                </p>
-              )}
               <button
                 type="button"
                 className="place-btn"
                 onClick={placeBet}
-                disabled={betLocked}
               >
                 ⬡ &nbsp;Place Your Bet
               </button>
+              {!isAuthed && (
+                <p
+                  className="mono"
+                  style={{
+                    fontSize: ".58rem",
+                    letterSpacing: ".05em",
+                    color: "var(--cdim)",
+                    margin: "12px 0 0",
+                    lineHeight: 1.5,
+                    textAlign: "center",
+                    opacity: 0.85,
+                  }}
+                >
+                  Bets settle on your paper balance after{" "}
+                  <Link
+                    to="/signup"
+                    style={{ color: G, textDecoration: "underline" }}
+                  >
+                    sign up
+                  </Link>
+                  . You can explore stakes and sides now.
+                </p>
+              )}
             </div>
 
             <div
@@ -712,7 +708,6 @@ export default function Landing() {
                   <button
                     type="button"
                     className="m-bet-yes"
-                    disabled={!isAuthed}
                     onClick={() => quickBet(i, "yes")}
                   >
                     Bet YES ▲
@@ -720,7 +715,6 @@ export default function Landing() {
                   <button
                     type="button"
                     className="m-bet-no"
-                    disabled={!isAuthed}
                     onClick={() => quickBet(i, "no")}
                   >
                     Bet NO ▼
