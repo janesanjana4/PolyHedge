@@ -113,4 +113,4 @@ async function getHeroMarket() {
 }
 
 // ── EXPORTS ───────────────────────────────────────────────
-module.exports = { getMarkets, getHeroMarket };
+export { getMarkets, getHeroMarket };

@@ -70,4 +70,4 @@ function mockPnL({ yesPct, amount = 100 }) {
   return { mock: true, scenarios };
 }
 
-module.exports = { runHexProject, getRunStatus, getPnLScenarios };
+export { runHexProject, getRunStatus, getPnLScenarios };
