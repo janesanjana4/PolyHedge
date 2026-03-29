@@ -123,13 +123,13 @@ export default function Landing() {
       <section className="hero">
         <div>
           <div className="hero-eyebrow">
-            Prediction Market Hedge Engine · Est. 2024
+            Prediction Market Hedge Engine · Est. 2026
           </div>
           {/* hero-title kept, SlotMachine replaced with static hedge headline */}
           <h1 className="hero-title">
-            The hedge layer Polymarket
+            The Hedge layer
             <br />
-            <em style={{ fontStyle: "italic", color: G }}>never built.</em>
+            <em style={{ fontStyle: "italic", color: G }}>that prediction markets need.</em>
           </h1>
           <p className="hero-body">
             Enter any leveraged position. PolyHedge finds the prediction market

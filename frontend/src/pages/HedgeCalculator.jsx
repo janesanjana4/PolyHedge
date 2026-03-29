@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import SimulateModal from "../components/SimulateModal";
 import {
   AreaChart,
   Area,
@@ -687,6 +688,7 @@ export default function HedgeCalculator() {
   ]);
   const [selectedHedge, setSelectedHedge] = useState(null);
   const [showExecution, setShowExecution] = useState(false);
+  const [showSimulate, setShowSimulate] = useState(false);
 
   function updatePos(index, field, value) {
     setPositions((prev) =>
@@ -940,13 +942,13 @@ export default function HedgeCalculator() {
 
                 <button
                   onClick={() => {
-                    const u = getUser();
-                    if (!u) {
-                      navigate("/signup");
-                      return;
-                    }
-                    alert("Strategy simulation coming soon.");
-                  }}
+                      const u = getUser();
+                      if (!u) {
+                        navigate("/signup");
+                        return;
+                      }
+                      setShowSimulate(true);
+                    }}
                   style={{
                     flex: 1,
                     padding: ".9rem",
@@ -1185,6 +1187,7 @@ export default function HedgeCalculator() {
             zIndex: 999,
           }}
         >
+          
           <div
             style={{
               width: 420,
@@ -1236,6 +1239,13 @@ export default function HedgeCalculator() {
             </button>
           </div>
         </div>
+      )}
+      {/* ← ADD HERE */}
+      {showSimulate && (
+        <SimulateModal
+          positions={positions}
+          onClose={() => setShowSimulate(false)}
+        />
       )}
     </div>
   );
