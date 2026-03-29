@@ -20,6 +20,7 @@ import {
   V_TRD,
   AVATARS,
 } from "../data/constants";
+import { getUser } from "../lib/userSession";
 
 const G = "#c6a15b";
 const GB = "#e2bc72";
@@ -226,8 +227,11 @@ export default function Landing() {
           <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
             <button className="btn-primary">Place Your Bet</button>
 
-            <Link to="/signup" className="btn-ghost">
-              Learn More
+            <Link
+              to={getUser() ? "/dashboard" : "/signup"}
+              className="btn-ghost"
+            >
+              Place your bets
             </Link>
           </div>
         </div>

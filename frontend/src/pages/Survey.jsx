@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { saveUser, getUser } from "../lib/userSession";
 
 const SECTORS = [
   { id: "finance", label: "Finance", icon: "📈" },
@@ -577,7 +579,12 @@ function validateEmail(val) {
 }
 
 export default function PolyHedgeSurvey() {
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    if (getUser()) navigate("/dashboard", { replace: true });
+  }, [navigate]);
   const [animKey, setAnimKey] = useState(0);
   const [done, setDone] = useState(false);
 
@@ -664,6 +671,7 @@ export default function PolyHedgeSurvey() {
       setAnimKey((k) => k + 1);
       setStep((s) => s + 1);
     } else {
+      saveUser(form);
       setDone(true);
     }
   };
@@ -767,7 +775,7 @@ export default function PolyHedgeSurvey() {
               </div>
             </div>
           ) : (
-            <SuccessScreen form={form} />
+            <SuccessScreen form={form} onGoToDashboard={() => navigate("/dashboard")} />
           )}
         </div>
       </div>
@@ -1068,7 +1076,7 @@ function Step3({ form, set }) {
   );
 }
 
-function SuccessScreen({ form }) {
+function SuccessScreen({ form, onGoToDashboard }) {
   return (
     <div className="ph-success slide-enter">
       <div className="ph-success-icon">✓</div>
@@ -1139,9 +1147,10 @@ function SuccessScreen({ form }) {
       <button
         className="ph-btn-primary"
         style={{ width: "100%" }}
-        onClick={() => alert("Redirecting to markets...")}
+        type="button"
+        onClick={onGoToDashboard}
       >
-        ⬡ Enter the Market
+        ⬡ Open your dashboard
       </button>
     </div>
   );
