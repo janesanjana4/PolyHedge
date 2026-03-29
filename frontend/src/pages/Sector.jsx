@@ -342,7 +342,7 @@ export default function Sector() {
         </Link>
       </div>
       <div style={{ padding: ".5rem 2rem 0" }}>
-        <Link to="/hedge"
+        <Link to="/hedge-calculator"
           style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: ".7rem", letterSpacing: ".1em", color: "#666", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
           onMouseEnter={(e) => e.currentTarget.style.color = G}
           onMouseLeave={(e) => e.currentTarget.style.color = "#666"}
