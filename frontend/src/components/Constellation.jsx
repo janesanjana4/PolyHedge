@@ -191,5 +191,6 @@ export default function Constellation() {
     };
   }, []);
 
-  return <canvas id="constellation-canvas" ref={ref} />;
+  return <canvas id="constellation-canvas" ref={ref} style={{ position: "fixed", top: 0, left: 0, zIndex: 0, pointerEvents: "none" }} />;
+
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import "../styles/landing.css";
 import Constellation from "../components/Constellation";
 import SlotMachine from "../components/SlotMachine";
@@ -26,6 +27,14 @@ const GD = "#7a6238";
 const YES = "#34d399";
 const NO = "#f87171";
 const BW = "rgba(198,161,91,0.28)";
+
+const KEYWORD_MAP = {
+  "":         "",
+  "politics": "president",
+  "finance":  "fed",
+  "crypto":   "bitcoin",
+  "sports":   "win",
+};
 
 export default function Landing() {
   const [balance, setBalance] = useState(1000);
@@ -78,7 +87,7 @@ export default function Landing() {
   }, []);
 
   useEffect(() => {
-    fetch(`${API}/api/hero-market`)
+    fetch(`${API}/api/markets/hero`)
       .then((r) => r.json())
       .then((d) => {
         if (d.success) setHeroMarket(d.market);
@@ -88,13 +97,17 @@ export default function Landing() {
   }, []);
 
   const loadMarkets = async (cat) => {
+    const keyword = KEYWORD_MAP[cat] ?? cat;
     try {
       const r = await fetch(
-        `${API}/api/markets?limit=6${cat ? "&keyword=" + encodeURIComponent(cat) : ""}`,
+        `${API}/api/markets?limit=6${keyword ? "&keyword=" + encodeURIComponent(keyword) : ""}`,
       );
       const d = await r.json();
+      console.log("response:", d); // ← add here
       if (d.success) setMarkets(d.markets);
-    } catch {}
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const showPopup = (msg, sub, win) => {
@@ -994,7 +1007,7 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* CATEGORIES */}
+      {/* CATEGORIES — fixed: <a href> → <Link to> for client-side routing */}
       <section id="categories">
         <div className="fade-in">
           <div className="sec-label">Explore</div>
@@ -1003,10 +1016,10 @@ export default function Landing() {
           </h2>
           <div className="cats-grid">
             {CATS.map((c) => (
-              <a
+              <Link
                 key={c.label}
                 className="cat-pill"
-                href={`/sector?sector=${c.label.toLowerCase()}`}
+                to={`/sector?sector=${c.label.toLowerCase()}`}
               >
                 <span style={{ fontSize: "1.1rem" }}>{c.icon}</span>
                 <span
@@ -1031,7 +1044,7 @@ export default function Landing() {
                 >
                   {c.count}
                 </span>
-              </a>
+              </Link>
             ))}
           </div>
         </div>

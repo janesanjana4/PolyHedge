@@ -41,62 +41,26 @@ function normalizeMarket(m) {
 // ── MAIN FUNCTION ─────────────────────────────────────────
 async function getMarkets({ keyword = "", limit = 6 } = {}) {
   try {
-    // ── STEP 1: try Polymarket search (fast path) ──
-    let url = `${GAMMA_BASE}/markets?active=true&closed=false&limit=${limit}`;
-
-    if (keyword) {
-      url += `&search=${encodeURIComponent(keyword)}`;
-    }
-
-    const res = await fetch(url);
+    // Fetch a large pool sorted by volume
+    const res = await fetch(
+      `${GAMMA_BASE}/markets?active=true&closed=false&limit=1000&order=volume&ascending=false`
+    );
     if (!res.ok) throw new Error(`Polymarket error: ${res.status}`);
 
     const data = await res.json();
     const raw = Array.isArray(data) ? data : data.markets || [];
+    const all = raw.map(normalizeMarket);
 
-    let markets = raw.map(normalizeMarket);
+    // No keyword → return top markets by volume
+    if (!keyword) return all.slice(0, limit);
 
-    // ── STEP 2: fallback if search failed ──
-    if (keyword && markets.length === 0) {
-      console.log("⚠️ search empty → fallback filtering");
+    // Filter client-side
+    const k = keyword.toLowerCase();
+    const filtered = all.filter((m) =>
+      (m.question + " " + m.slug + " " + m.category).toLowerCase().includes(k)
+    );
 
-      const fallbackRes = await fetch(
-        `${GAMMA_BASE}/markets?active=true&closed=false&limit=50`,
-      );
-
-      if (!fallbackRes.ok)
-        throw new Error(`Fallback fetch error: ${fallbackRes.status}`);
-
-      const fallbackData = await fallbackRes.json();
-      const fallbackRaw = Array.isArray(fallbackData)
-        ? fallbackData
-        : fallbackData.markets || [];
-
-      const k = keyword.toLowerCase();
-
-      markets = fallbackRaw.map(normalizeMarket).filter((m) => {
-        const text = (m.question + " " + m.category).toLowerCase();
-        return text.includes(k);
-      });
-    }
-
-    // ── STEP 3: final fallback (never return empty) ──
-    if (markets.length === 0) {
-      console.log("⚠️ no matches → returning trending");
-
-      const fallbackRes = await fetch(
-        `${GAMMA_BASE}/markets?active=true&closed=false&limit=${limit}`,
-      );
-
-      const fallbackData = await fallbackRes.json();
-      const fallbackRaw = Array.isArray(fallbackData)
-        ? fallbackData
-        : fallbackData.markets || [];
-
-      return fallbackRaw.map(normalizeMarket);
-    }
-
-    return markets.slice(0, limit);
+    return filtered.slice(0, limit);
   } catch (err) {
     console.error("❌ getMarkets error:", err.message);
     return [];
@@ -113,4 +77,4 @@ async function getHeroMarket() {
 }
 
 // ── EXPORTS ───────────────────────────────────────────────
-export { getMarkets, getHeroMarket };
+module.exports = { getMarkets, getHeroMarket };

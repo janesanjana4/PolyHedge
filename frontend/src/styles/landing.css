@@ -467,6 +467,8 @@ section {
     grid-template-columns: repeat(3, 1fr);
     gap: 1px;
     background: rgba(198, 161, 91, 0.28);
+    position: relative;
+    z-index: 1;
 }
 
 .market-card {
