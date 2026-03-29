@@ -760,12 +760,15 @@ export default function PolyHedgeSurvey() {
                 {step === 3 && <Step3 form={form} set={set} />}
               </div>
               <div className="ph-card-footer">
-                {step > 0 && (
-                  <button className="ph-btn-ghost" onClick={back}>
-                    ← Back
-                  </button>
-                )}
                 <button
+                  type="button"
+                  className="ph-btn-ghost"
+                  onClick={() => (step === 0 ? navigate("/") : back())}
+                >
+                  {step === 0 ? "← Go back" : "← Back"}
+                </button>
+                <button
+                  type="button"
                   className="ph-btn-primary"
                   onClick={next}
                   disabled={!canAdvance()}
