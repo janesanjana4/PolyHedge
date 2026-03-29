@@ -4,7 +4,7 @@ export default function Navbar({ balance }) {
     <nav className="nav">
       <div className="nav-logo">
         <div className="nav-dot" />
-        &nbsp;Poly Hedge
+        &nbsp;PolyHedge
       </div>
       <ul className="nav-links">
         {links.map((l) => (
