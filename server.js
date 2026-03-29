@@ -122,7 +122,6 @@ const server = app.listen(PORT, () => {
     `🔐  Auth0 signup: ${a0.domain && a0.clientId ? "✅ configured" : "❌ missing domain/client_id"}`,
   );
   console.log(`🌿  CORS origin: ${FRONTEND_ORIGIN}`);
-  console.log(`\n🌐  http://localhost:${PORT}/PolymarketLandingPage.html\n`);
 });
 
 server.on("error", (err) => {

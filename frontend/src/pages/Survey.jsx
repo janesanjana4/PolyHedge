@@ -175,7 +175,11 @@ export default function PolyHedgeSurvey() {
         });
         setDone(true);
       } catch (e) {
-        setSignupError(e.message || "Signup failed");
+        setSignupError(
+          typeof e.message === "string" ? e.message : 
+          e.details?.[0]?.message || 
+          "Signup failed"
+        );
       } finally {
         setSubmitting(false);
       }
@@ -277,7 +281,8 @@ export default function PolyHedgeSurvey() {
                     lineHeight: 1.5,
                   }}
                 >
-                  ⚠ {signupError}
+                  ⚠ {typeof signupError === "string" ? signupError : signupError?.message || "Signup failed"}
+
                 </div>
               )}
               <div className="ph-card-footer">

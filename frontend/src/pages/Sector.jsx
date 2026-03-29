@@ -207,8 +207,7 @@ function MarketCard({ market, sectorKey, isSelected, onClick }) {
   );
 }
 
-// ── Chat Window ───────────────────────────────────────────────────────────────
-<ChatWindow />
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function Sector() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -216,7 +215,6 @@ export default function Sector() {
   const [markets, setMarkets]           = useState([]);
   const [status, setStatus]             = useState("loading");
   const [apiBadge, setApiBadge]         = useState({ text: "⬡ Fetching…", cls: "" });
-  const [chatOpen, setChatOpen]         = useState(false);
   const [selectedMarket, setSelectedMarket] = useState(null);
 
   const sector = SECTORS.find((s) => s.key === activeSector) || SECTORS[0];

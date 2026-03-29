@@ -19,7 +19,6 @@ const YES_C = "#34d399";
 const NO_C = "#f87171";
 const BLUE = "#60a5fa";
 const API = import.meta.env.VITE_API_URL || "";
-const navigate = useNavigate();
 
 // ── Payoff math ───────────────────────────────────────────────────────────────
 function calcPayoff(positions) {
@@ -940,6 +939,14 @@ export default function HedgeCalculator() {
                 </button>
 
                 <button
+                  onClick={() => {
+                    const u = getUser();
+                    if (!u) {
+                      navigate("/signup");
+                      return;
+                    }
+                    alert("Strategy simulation coming soon.");
+                  }}
                   style={{
                     flex: 1,
                     padding: ".9rem",
