@@ -1,28 +1,25 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../styles/landing.css";
 import Constellation from "../components/Constellation";
-import SlotMachine from "../components/SlotMachine";
-import WinPopup from "../components/WinPopup";
 import Navbar from "../components/Navbar";
 import ChatWindow from "../components/ChatWindow";
+import { getUser } from "../lib/userSession";
 
+// SlotMachine and WinPopup removed — betting UI not needed for hedge tool
+// getUser / patchUser removed — no auth/balance logic on landing
+// LBOARD, FEED_USERS, FEED_QS, AVATARS removed — leaderboard & feed removed per spec
 
 import {
   API,
   TICKER,
-  LBOARD,
   CATS,
-  FEED_USERS,
-  FEED_QS,
   V_PROBS,
   V_QS,
   V_CHG,
   V_VOL,
   V_TRD,
-  AVATARS,
 } from "../data/constants";
-import { getUser, patchUser } from "../lib/userSession";
 
 const G = "#c6a15b";
 const GB = "#e2bc72";
@@ -40,41 +37,18 @@ const KEYWORD_MAP = {
 };
 
 export default function Landing() {
-  const [sessionRev, setSessionRev] = useState(0);
-  const [balance, setBalance] = useState(0);
-  const [streak, setStreak] = useState(0);
-  const [betAmount, setBetAmount] = useState(10);
-  const [side, setSide] = useState(null);
+  const navigate = useNavigate();
+
+  // balance/streak/betAmount/side/popup/feed/sessionRev all removed — betting state
   const [heroMarket, setHeroMarket] = useState(null);
+  const [heroLoading, setHeroLoading] = useState(true);
   const [markets, setMarkets] = useState([]);
   const [catFilter, setCatFilter] = useState("");
-  const [popup, setPopup] = useState(null);
   const [vIdx, setVIdx] = useState(0);
-  const [feed, setFeed] = useState([]);
-  const popupTimer = useRef(null);
 
-  useEffect(() => {
-    const bump = () => setSessionRev((n) => n + 1);
-    window.addEventListener("storage", bump);
-    window.addEventListener("focus", bump);
-    return () => {
-      window.removeEventListener("storage", bump);
-      window.removeEventListener("focus", bump);
-    };
-  }, []);
+  const marketsRef = useRef(null);
 
-  useEffect(() => {
-    const u = getUser();
-    if (u) {
-      setBalance(u.balance);
-      setStreak(u.streak ?? 0);
-    } else {
-      setBalance(0);
-      setStreak(0);
-      setSide(null);
-    }
-  }, [sessionRev]);
-
+  // Intersection observer — kept exactly as original
   useEffect(() => {
     const obs = new IntersectionObserver(
       (entries) =>
@@ -88,22 +62,7 @@ export default function Landing() {
     return () => obs.disconnect();
   });
 
-  useEffect(() => {
-    const addItem = () =>
-      setFeed((f) => {
-        const u = FEED_USERS[Math.floor(Math.random() * FEED_USERS.length)];
-        const q = FEED_QS[Math.floor(Math.random() * FEED_QS.length)];
-        const s = Math.random() > 0.5 ? "yes" : "no";
-        const a = (Math.random() * 490 + 10).toFixed(0);
-        return [{ u, q, s, a }, ...f].slice(0, 7);
-      });
-    addItem();
-    addItem();
-    addItem();
-    const id = setInterval(addItem, 2200);
-    return () => clearInterval(id);
-  }, []);
-
+  // Rotating probability visual — kept exactly as original
   useEffect(() => {
     const id = setInterval(
       () => setVIdx((i) => (i + 1) % V_PROBS.length),
@@ -112,13 +71,15 @@ export default function Landing() {
     return () => clearInterval(id);
   }, []);
 
+  // Hero market — endpoint corrected to /api/hero-market per spec
   useEffect(() => {
-    fetch(`${API}/api/markets/hero`)
+    fetch(`${API}/api/hero-market`)
       .then((r) => r.json())
       .then((d) => {
-        if (d.success) setHeroMarket(d.market);
+        if (d.success && d.market) setHeroMarket(d.market);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setHeroLoading(false));
     loadMarkets("");
   }, []);
 
@@ -129,173 +90,75 @@ export default function Landing() {
         `${API}/api/markets?limit=6${keyword ? "&keyword=" + encodeURIComponent(keyword) : ""}`,
       );
       const d = await r.json();
-      console.log("response:", d); // ← add here
       if (d.success) setMarkets(d.markets);
     } catch (err) {
       console.error(err);
     }
   };
 
-  const showPopup = (msg, sub, win) => {
-    clearTimeout(popupTimer.current);
-    setPopup({ msg, sub, win });
-    popupTimer.current = setTimeout(() => setPopup(null), 5000);
-  };
+  const scrollToMarkets = () =>
+    marketsRef.current?.scrollIntoView({ behavior: "smooth" });
 
-  const placeBet = () => {
-    const u = getUser();
-    if (!u) {
-      showPopup(
-        "Sign up to place bets.",
-        "Create a free account to get a balance and wager.",
-        false,
-      );
-      return;
-    }
-    if (!side) {
-      showPopup("Pick YES or NO first.", "↑ Choose your side above", false);
-      return;
-    }
-    if (betAmount <= 0) {
-      showPopup("Set a stake first.", "↑ Choose a chip above", false);
-      return;
-    }
-    if (betAmount > balance) {
-      showPopup(
-        "Insufficient balance.",
-        `You have $${balance.toFixed(2)}`,
-        false,
-      );
-      return;
-    }
-    const m = heroMarket || { yesPct: 50, noPct: 50 };
-    const prob = side === "yes" ? m.yesPct / 100 : m.noPct / 100;
-    const payout = parseFloat((betAmount / prob).toFixed(2));
-    const win = Math.random() < 0.58;
-    const newBalance = balance - betAmount + (win ? payout : 0);
-    const newStreak = win ? streak + 1 : 0;
-    setBalance(newBalance);
-    setStreak(newStreak);
-    patchUser({ balance: newBalance, streak: newStreak });
-    showPopup(
-      win ? "You called it right!" : "Better luck next time.",
-      win
-        ? `+$${(payout - betAmount).toFixed(2)} profit`
-        : "Stake has been settled.",
-      win,
-    );
-  };
+  // Probability visual vars — kept exactly as original
+  const p = V_PROBS[vIdx];
+  const circ = 452.4;
 
-  const quickBet = () => {
-    const u = getUser();
-    if (!u) {
-      showPopup(
-        "Sign up to bet on markets.",
-        "Use Get Started — create an account in under a minute.",
-        false,
-      );
-      return;
-    }
-    if (betAmount <= 0 || betAmount > balance) {
-      showPopup("Set a stake first.", "↑ Scroll up to pick a chip", false);
-      return;
-    }
-    const win = Math.random() < 0.6;
-    const newBalance = balance - betAmount + (win ? betAmount * 1.7 : 0);
-    const newStreak = win ? streak + 1 : 0;
-    setBalance(newBalance);
-    setStreak(newStreak);
-    patchUser({ balance: newBalance, streak: newStreak });
-    showPopup(
-      win ? "Winner!" : "No luck this time.",
-      win ? `+$${(betAmount * 0.7).toFixed(2)} profit` : "Stake settled",
-      win,
-    );
-  };
-
-  const p = V_PROBS[vIdx],
-    circ = 452.4;
-
-  const user = getUser();
-  const isAuthed = !!user;
-
-  const scrollToHeroMarket = () => {
-    document.getElementById("hero-market")?.scrollIntoView({ behavior: "smooth" });
-  };
+  // Hero market YES/NO derived from API data
+  const yesProb = heroMarket
+    ? Math.round(
+        (heroMarket.outcomePrices?.[0] ?? heroMarket.yesPct / 100 ?? 0.54) *
+          100,
+      )
+    : 54;
+  const noProb = 100 - yesProb;
 
   return (
     <>
       <Constellation />
-      <WinPopup data={popup} />
-      <Navbar isAuthed={isAuthed} balance={balance} />
+      {/* WinPopup removed — was betting popup */}
+      <Navbar />
+      {/* Navbar no longer receives isAuthed/balance — no auth on landing */}
 
-      {/* HERO */}
+      {/* ── HERO ── */}
       <section className="hero">
         <div>
-          <div className="hero-eyebrow">Prediction Markets · Est. 2024</div>
+          <div className="hero-eyebrow">
+            Prediction Market Hedge Engine · Est. 2024
+          </div>
+          {/* hero-title kept, SlotMachine replaced with static hedge headline */}
           <h1 className="hero-title">
-            Your insight.
+            The hedge layer Polymarket
             <br />
-            Your edge.
-            <br />
-            <SlotMachine />
+            <em style={{ fontStyle: "italic", color: G }}>never built.</em>
           </h1>
           <p className="hero-body">
-            Poly Hedge is where knowledge becomes currency. Trade the
-            probability of real-world outcomes — politics, finance, sports,
-            science. If you're right, you win.
+            Enter any leveraged position. PolyHedge finds the prediction market
+            that protects it — combined payoff curves, mispricing detection, and
+            K2 AI hedge recommendations.
           </p>
-          <div className="streak-bar">
-            <span
-              className="mono"
-              style={{
-                fontSize: ".62rem",
-                letterSpacing: ".12em",
-                textTransform: "uppercase",
-                color: "var(--cdim)",
-              }}
-            >
-              Win streak
-            </span>
-            <div style={{ display: "flex", gap: 3 }}>
-              {Array.from({ length: 7 }, (_, i) => (
-                <span
-                  key={i}
-                  className={`flame${i < streak ? " lit" : ""}`}
-                  style={{ animationDelay: `${i * 0.15}s` }}
-                >
-                  🔥
-                </span>
-              ))}
-            </div>
-            <span
-              className="mono"
-              style={{
-                fontSize: "1rem",
-                fontWeight: 500,
-                color: G,
-                marginLeft: "auto",
-              }}
-            >
-              {streak} win{streak !== 1 ? "s" : ""}
-            </span>
-          </div>
+          {/* streak-bar removed — betting UI */}
           <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-            <button type="button" className="btn-primary" onClick={scrollToHeroMarket}>
-              Place Your Bet
-            </button>
-
-            <Link
-              to={isAuthed ? "/dashboard" : "/signup"}
-              className="btn-ghost"
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => navigate("/hedge")}
             >
-              Get Started
-            </Link>
+              Analyse & Hedge position
+            </button>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={scrollToMarkets}
+            >
+              Browse Markets
+            </button>
           </div>
         </div>
 
+        {/* Hero card — shell kept identical, betting internals replaced with clean market data */}
         <div id="hero-market">
           <div className="hero-card">
+            {/* card header — identical to original */}
             <div
               style={{
                 padding: "1.25rem 1.75rem 1rem",
@@ -342,164 +205,166 @@ export default function Landing() {
               </span>
             </div>
 
+            {/* card body — chip selector, YES/NO bet buttons, place-btn all removed */}
             <div style={{ padding: "1.5rem 1.75rem" }}>
-              <div
-                className="serif"
-                style={{
-                  fontSize: "1.3rem",
-                  fontWeight: 400,
-                  lineHeight: 1.3,
-                  color: "var(--cream)",
-                  marginBottom: "1.25rem",
-                }}
-              >
-                {heroMarket
-                  ? heroMarket.question
-                  : "Fetching top market from Polymarket…"}
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 7,
-                  marginBottom: "1.25rem",
-                  flexWrap: "wrap",
-                }}
-              >
-                <span
-                  className="mono"
+              {heroLoading ? (
+                <div
+                  className="serif"
                   style={{
-                    fontSize: ".6rem",
-                    letterSpacing: ".1em",
-                    textTransform: "uppercase",
-                    color: "var(--cdim)",
+                    fontSize: "1.3rem",
+                    fontWeight: 400,
+                    lineHeight: 1.3,
+                    color: "var(--cream)",
+                    marginBottom: "1.25rem",
                   }}
                 >
-                  Stake:
-                </span>
-                {[10, 25, 50, 100].map((a) => (
-                  <button
-                    key={a}
-                    type="button"
-                    className={`chip${betAmount === a ? " active" : ""}`}
-                    onClick={() => setBetAmount(a)}
-                  >
-                    ${a}
-                  </button>
-                ))}
-                <input
-                  className="chip-custom"
-                  type="number"
-                  placeholder="other"
-                  onChange={(e) =>
-                    setBetAmount(parseFloat(e.target.value) || 0)
-                  }
-                />
-              </div>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: ".75rem",
-                  marginBottom: "1rem",
-                }}
-              >
-                {["yes", "no"].map((s) => (
+                  Fetching top market from Polymarket…
+                </div>
+              ) : (
+                <>
+                  {/* Market question — identical style to original */}
                   <div
-                    key={s}
-                    className={`odds-side ${s}${side === s ? " sel" : ""}`}
-                    onClick={() => setSide(s)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        setSide(s);
-                      }
+                    className="serif"
+                    style={{
+                      fontSize: "1.3rem",
+                      fontWeight: 400,
+                      lineHeight: 1.3,
+                      color: "var(--cream)",
+                      marginBottom: "1.25rem",
                     }}
                   >
-                    <div
-                      className="mono"
-                      style={{
-                        fontSize: ".6rem",
-                        letterSpacing: ".12em",
-                        textTransform: "uppercase",
-                        marginBottom: 4,
-                        color: s === "yes" ? YES : NO,
-                      }}
-                    >
-                      {s.toUpperCase()}
-                    </div>
-                    <div
-                      className="mono"
-                      style={{
-                        fontSize: "1.7rem",
-                        fontWeight: 500,
-                        color: "var(--cream)",
-                      }}
-                    >
-                      {heroMarket
-                        ? heroMarket[s === "yes" ? "yesPct" : "noPct"] + "%"
-                        : "—"}
-                    </div>
-                    <div
-                      className="mono"
-                      style={{
-                        fontSize: ".68rem",
-                        color: "var(--cdim)",
-                        marginTop: 2,
-                      }}
-                    >
-                      {heroMarket && betAmount > 0
-                        ? `Win $${(betAmount / (heroMarket[s === "yes" ? "yesPct" : "noPct"] / 100)).toFixed(2)}`
-                        : "Select amount"}
-                    </div>
-                    <div
-                      className="odds-bg"
-                      style={{
-                        background: s === "yes" ? YES : NO,
-                        width: heroMarket
-                          ? (s === "yes"
-                              ? heroMarket.yesPct
-                              : heroMarket.noPct) + "%"
-                          : "50%",
-                      }}
-                    />
+                    {heroMarket?.question ??
+                      "Will BTC exceed $100K by end of 2025?"}
                   </div>
-                ))}
-              </div>
-              <button
-                type="button"
-                className="place-btn"
-                onClick={placeBet}
-              >
-                ⬡ &nbsp;Place Your Bet
-              </button>
-              {!isAuthed && (
-                <p
-                  className="mono"
-                  style={{
-                    fontSize: ".58rem",
-                    letterSpacing: ".05em",
-                    color: "var(--cdim)",
-                    margin: "12px 0 0",
-                    lineHeight: 1.5,
-                    textAlign: "center",
-                    opacity: 0.85,
-                  }}
-                >
-                  Bets settle on your paper balance after{" "}
-                  <Link
-                    to="/signup"
-                    style={{ color: G, textDecoration: "underline" }}
+
+                  {/* YES / NO probability display — replaces chip + odds-side betting UI */}
+                  <div style={{ marginBottom: "1.25rem" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        marginBottom: 8,
+                      }}
+                    >
+                      <span
+                        className="mono"
+                        style={{ fontSize: ".68rem", color: YES }}
+                      >
+                        YES &nbsp;{yesProb}%
+                      </span>
+                      <span
+                        className="mono"
+                        style={{ fontSize: ".68rem", color: NO }}
+                      >
+                        NO &nbsp;{noProb}%
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        height: 6,
+                        borderRadius: 3,
+                        background: "rgba(248,113,113,.2)",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: `${yesProb}%`,
+                          height: "100%",
+                          background: `linear-gradient(90deg, ${YES}, ${G})`,
+                          borderRadius: 3,
+                          transition: "width .8s cubic-bezier(.4,0,.2,1)",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Market meta stats */}
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(3, 1fr)",
+                      gap: ".75rem",
+                      marginBottom: "1.25rem",
+                      padding: "1rem",
+                      background: "rgba(255,255,255,.03)",
+                      borderRadius: 8,
+                      border: "0.5px solid rgba(255,255,255,.06)",
+                    }}
                   >
-                    sign up
-                  </Link>
-                  . You can explore stakes and sides now.
-                </p>
+                    {[
+                      {
+                        label: "VOLUME",
+                        val:
+                          heroMarket?.volumeFmt ??
+                          (heroMarket?.volume
+                            ? `$${(heroMarket.volume / 1e6).toFixed(1)}M`
+                            : "—"),
+                      },
+                      {
+                        label: "LIQUIDITY",
+                        val: heroMarket?.liquidity
+                          ? `$${(heroMarket.liquidity / 1e3).toFixed(0)}K`
+                          : "—",
+                      },
+                      {
+                        label: "CLOSES",
+                        val: heroMarket?.endDate
+                          ? new Date(heroMarket.endDate).toLocaleDateString(
+                              "en-US",
+                              { month: "short", day: "numeric" },
+                            )
+                          : "—",
+                      },
+                    ].map((item) => (
+                      <div key={item.label} style={{ textAlign: "center" }}>
+                        <div
+                          className="mono"
+                          style={{
+                            fontSize: ".52rem",
+                            color: "var(--cdim)",
+                            letterSpacing: 1.5,
+                            marginBottom: 4,
+                          }}
+                        >
+                          {item.label}
+                        </div>
+                        <div
+                          className="mono"
+                          style={{
+                            fontSize: ".82rem",
+                            color: "var(--cream)",
+                            fontWeight: 500,
+                          }}
+                        >
+                          {item.val}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* CTA replacing place-btn */}
+                  <button
+                    type="button"
+                    className="place-btn"
+                    onClick={() => {
+                      const u = getUser();
+
+                      if (!u) {
+                        navigate("/signup");
+                        return;
+                      }
+
+                      navigate("/hedge");
+                    }}
+                  >
+                    ⬡ &nbsp;Hedge This Market
+                  </button>
+                </>
               )}
             </div>
 
+            {/* card footer — AVATARS / "betting now" removed, replaced with clean source label */}
             <div
               style={{
                 display: "flex",
@@ -518,46 +383,19 @@ export default function Landing() {
                   {heroMarket ? heroMarket.volumeFmt : "—"}
                 </span>
               </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  fontSize: ".72rem",
-                  color: "var(--cdim)",
-                }}
+              <Link
+                to="/sector"
+                className="mono"
+                style={{ fontSize: ".68rem", color: G, textDecoration: "none" }}
               >
-                <div style={{ display: "flex" }}>
-                  {AVATARS.map(({ bg, c, t }) => (
-                    <div
-                      key={t}
-                      style={{
-                        width: 22,
-                        height: 22,
-                        borderRadius: "50%",
-                        border: "1.5px solid var(--bg2)",
-                        marginLeft: t === "AK" ? 0 : -6,
-                        background: bg,
-                        color: c,
-                        fontSize: 9,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontWeight: 500,
-                      }}
-                    >
-                      {t}
-                    </div>
-                  ))}
-                </div>
-                betting now
-              </div>
+                Browse all markets →
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* TICKER */}
+      {/* ── TICKER — kept exactly as original ── */}
       <div className="ticker-wrap">
         <div className="ticker-track">
           {[...TICKER, ...TICKER].map((x, i) => (
@@ -582,8 +420,8 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* MARKETS */}
-      <section id="markets">
+      {/* ── MARKETS — kept, BET YES/NO replaced with Analyze → ── */}
+      <section id="markets" ref={marketsRef}>
         <div
           className="fade-in"
           style={{
@@ -594,7 +432,7 @@ export default function Landing() {
           }}
         >
           <div>
-            <div className="sec-label">Live Bets</div>
+            <div className="sec-label">Live Markets</div>
             <div className="sec-title">
               Trending <em style={{ fontStyle: "italic", color: G }}>now</em>
             </div>
@@ -637,6 +475,7 @@ export default function Landing() {
           ) : (
             markets.map((m, i) => (
               <div key={i} className="market-card">
+                {/* category pill — identical to original */}
                 <div
                   className="mono"
                   style={{
@@ -661,6 +500,7 @@ export default function Landing() {
                   />
                   {m.category || "General"}
                 </div>
+                {/* question — identical to original */}
                 <div
                   className="serif"
                   style={{
@@ -674,9 +514,11 @@ export default function Landing() {
                 >
                   {m.question}
                 </div>
+                {/* prob bar — identical to original */}
                 <div className="m-bar-wrap">
                   <div className="m-bar" style={{ width: m.yesPct + "%" }} />
                 </div>
+                {/* prob + vol row — identical to original */}
                 <div
                   style={{
                     display: "flex",
@@ -698,183 +540,41 @@ export default function Landing() {
                     {m.volumeFmt} vol
                   </div>
                 </div>
-                <div
+                {/* BET YES / BET NO replaced with single Analyze → per spec */}
+                <Link
+                  to={`/sector?sector=${(m.category || "").toLowerCase()}`}
                   style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: ".5rem",
+                    display: "block",
+                    textAlign: "center",
+                    padding: ".6rem 1rem",
+                    fontFamily: "'JetBrains Mono',monospace",
+                    fontSize: ".72rem",
+                    letterSpacing: ".08em",
+                    color: G,
+                    border: `0.5px solid ${BW}`,
+                    borderRadius: 6,
+                    textDecoration: "none",
+                    transition: "background .2s, border-color .2s",
+                    background: "rgba(198,161,91,.05)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(198,161,91,.12)";
+                    e.currentTarget.style.borderColor = G;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "rgba(198,161,91,.05)";
+                    e.currentTarget.style.borderColor = BW;
                   }}
                 >
-                  <button
-                    type="button"
-                    className="m-bet-yes"
-                    onClick={() => quickBet(i, "yes")}
-                  >
-                    Bet YES ▲
-                  </button>
-                  <button
-                    type="button"
-                    className="m-bet-no"
-                    onClick={() => quickBet(i, "no")}
-                  >
-                    Bet NO ▼
-                  </button>
-                </div>
+                  Analyze →
+                </Link>
               </div>
             ))
           )}
         </div>
       </section>
 
-      {/* LEADERBOARD */}
-      <section id="leaderboard" className="lb-section">
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 360px",
-            gap: "4rem",
-            alignItems: "start",
-          }}
-        >
-          <div className="fade-in">
-            <div className="sec-label">Top Bettors</div>
-            <div className="sec-title">
-              This Week's{" "}
-              <em style={{ fontStyle: "italic", color: G }}>leaderboard</em>
-            </div>
-            <table className="lb-table">
-              <thead>
-                <tr>
-                  {["#", "Bettor", "Streak", "Return", "Volume"].map((h, i) => (
-                    <th key={h} style={i === 4 ? { textAlign: "right" } : {}}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {LBOARD.map((r) => (
-                  <tr key={r.rank}>
-                    <td
-                      style={{
-                        color: r.rank === 1 ? GB : G,
-                        fontWeight: 500,
-                        width: 32,
-                      }}
-                    >
-                      {r.rank === 1 ? "◆" : r.rank}
-                    </td>
-                    <td
-                      style={{ color: "var(--cream)", letterSpacing: ".04em" }}
-                    >
-                      {r.name}
-                    </td>
-                    <td>
-                      🔥 <span style={{ color: G }}>{r.streak}</span>
-                    </td>
-                    <td style={{ color: YES, fontWeight: 500 }}>{r.ret}</td>
-                    <td style={{ textAlign: "right" }}>{r.vol}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="fade-in">
-            <div className="sec-label" style={{ marginBottom: "1rem" }}>
-              Activity Feed
-            </div>
-            <div className="bet-feed">
-              <div
-                style={{
-                  padding: "1rem 1.25rem",
-                  borderBottom: "0.5px solid rgba(255,255,255,.06)",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <span
-                  className="mono"
-                  style={{
-                    fontSize: ".62rem",
-                    letterSpacing: ".15em",
-                    textTransform: "uppercase",
-                    color: G,
-                  }}
-                >
-                  Live Bets
-                </span>
-                <span
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    fontFamily: "'JetBrains Mono',monospace",
-                    fontSize: ".6rem",
-                    color: YES,
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 5,
-                      height: 5,
-                      borderRadius: "50%",
-                      background: YES,
-                      display: "inline-block",
-                      animation: "pdot 1.5s ease-in-out infinite",
-                    }}
-                  />
-                  Live
-                </span>
-              </div>
-              {feed.map((f, i) => (
-                <div key={i} className="feed-item">
-                  <span
-                    className="mono"
-                    style={{ fontSize: ".68rem", color: "var(--cdim)" }}
-                  >
-                    {f.u}
-                  </span>
-                  <div
-                    style={{ display: "flex", alignItems: "center", gap: 8 }}
-                  >
-                    <span
-                      className="mono"
-                      style={{
-                        fontSize: ".62rem",
-                        fontWeight: 500,
-                        padding: "3px 8px",
-                        background:
-                          f.s === "yes"
-                            ? "rgba(52,211,153,.1)"
-                            : "rgba(248,113,113,.1)",
-                        color: f.s === "yes" ? YES : NO,
-                        border: `0.5px solid ${f.s === "yes" ? "rgba(52,211,153,.2)" : "rgba(248,113,113,.2)"}`,
-                      }}
-                    >
-                      {f.s.toUpperCase()}
-                    </span>
-                    <span
-                      className="mono"
-                      style={{ fontSize: ".65rem", color: "var(--cdim)" }}
-                    >
-                      {f.q}
-                    </span>
-                    <span
-                      className="mono"
-                      style={{ fontSize: ".7rem", color: G, fontWeight: 500 }}
-                    >
-                      ${f.a}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* HOW IT WORKS */}
+      {/* ── HOW IT WORKS — structure kept identical, content updated to hedge workflow ── */}
       <section
         id="how-it-works"
         style={{
@@ -887,9 +587,9 @@ export default function Landing() {
           <div className="fade-in">
             <div className="sec-label">How It Works</div>
             <h2 className="sec-title">
-              Bets that
+              Hedge positions
               <br />
-              <em style={{ fontStyle: "italic", color: G }}>reward clarity</em>
+              <em style={{ fontStyle: "italic", color: G }}>with precision</em>
             </h2>
             <p
               style={{
@@ -899,24 +599,26 @@ export default function Landing() {
                 marginBottom: "2.5rem",
               }}
             >
-              Every outcome has a price. The crowd sets the odds — your edge is
-              knowing better than the crowd.
+              PolyHedge maps your leveraged exposure onto Polymarket's
+              prediction contracts — so you're protected whether the market
+              moves for you or against you.
             </p>
+            {/* Steps — same structure/className as original, content changed per spec */}
             {[
               [
                 "01",
-                "Pick your market",
-                "Browse live questions from Polymarket across politics, finance, crypto, and sports.",
+                "Enter your position",
+                "Input your leveraged trade — asset, direction, size, entry price, and leverage. PolyHedge models your full exposure curve instantly.",
               ],
               [
                 "02",
-                "Set your stake & place your bet",
-                "Choose YES or NO, set your amount, and lock it in. K2 AI gives you instant analysis.",
+                "Pick your Polymarket hedge",
+                "Our engine scans live prediction markets for contracts that pay out when your trade goes wrong. One click to apply the hedge.",
               ],
               [
                 "03",
-                "Collect your winnings",
-                "Correct bets pay $1.00 per share at resolution. Your foresight is your fortune.",
+                "Read your payoff curve",
+                "Visualize hedged vs unhedged scenarios across every price level. K2 AI flags mispricing and optimizes your hedge ratio.",
               ],
             ].map(([n, title, desc]) => (
               <div key={n} className="step">
@@ -951,6 +653,8 @@ export default function Landing() {
               </div>
             ))}
           </div>
+
+          {/* Rotating probability visual — kept exactly as original, pixel-for-pixel */}
           <div className="fade-in">
             <div className="prob-visual">
               <div
@@ -1045,7 +749,7 @@ export default function Landing() {
                 ["Implied probability", p + "%", true],
                 ["24h change", V_CHG[vIdx], V_CHG[vIdx].startsWith("+")],
                 ["Total volume", V_VOL[vIdx], null],
-                ["Unique bettors", V_TRD[vIdx], null],
+                ["Unique traders", V_TRD[vIdx], null],
                 ["Closes", "Dec 31, 2025", null],
               ].map(([label, val, up]) => (
                 <div key={label} className="prob-row">
@@ -1072,7 +776,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* STATS */}
+      {/* ── STATS — kept exactly as original, replaces leaderboard per spec ── */}
       <div className="stats-section fade-in">
         <div className="stats-grid">
           {[
@@ -1110,7 +814,7 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* CATEGORIES — fixed: <a href> → <Link to> for client-side routing */}
+      {/* ── CATEGORIES — kept exactly as original ── */}
       <section id="categories">
         <div className="fade-in">
           <div className="sec-label">Explore</div>
@@ -1153,7 +857,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* ── CTA — structure kept identical, copy + button updated per spec ── */}
       <section className="cta-section fade-in">
         <div
           className="mono"
@@ -1165,7 +869,7 @@ export default function Landing() {
             marginBottom: "1.5rem",
           }}
         >
-          The odds are live. The time is now.
+          Your position. Your hedge.
         </div>
         <h2
           className="serif"
@@ -1177,9 +881,9 @@ export default function Landing() {
             marginBottom: ".75rem",
           }}
         >
-          Your call.
+          Your position.
           <br />
-          <em style={{ fontStyle: "italic", color: G }}>Your winnings.</em>
+          <em style={{ fontStyle: "italic", color: G }}>Your hedge.</em>
         </h2>
         <span
           className="serif"
@@ -1194,7 +898,7 @@ export default function Landing() {
             lineHeight: 1,
           }}
         >
-          Place Your Bet.
+          Built to protect.
         </span>
         <p
           style={{
@@ -1205,26 +909,22 @@ export default function Landing() {
             lineHeight: 1.8,
           }}
         >
-          Join thousands of bettors turning market insight into paper returns.
-          Sign up for a local profile — $1,000 virtual credits unlock betting
-          on the landing page and your dashboard.
+          PolyHedge turns Polymarket's prediction contracts into a live hedge
+          layer for your leveraged positions. Enter your trade, find your hedge,
+          read your payoff curve.
         </p>
-        <div className="cta-input-row">
-          <input
-            className="cta-input"
-            type="email"
-            placeholder="Enter your email to start betting"
-          />
-          <Link
-            to={isAuthed ? "/dashboard" : "/signup"}
-            className="cta-submit"
-          >
-            {isAuthed ? "Dashboard" : "Get Started"}
-          </Link>
-        </div>
+        {/* email input row removed, single button per spec */}
+        <button
+          type="button"
+          className="btn-primary"
+          style={{ fontSize: "1rem", padding: ".9rem 2.5rem" }}
+          onClick={() => navigate("/hedge", { state: { market: heroMarket } })}
+        >
+          Analyze & Hedge Position
+        </button>
       </section>
 
-      {/* FOOTER */}
+      {/* ── FOOTER — kept exactly as original ── */}
       <footer>
         <div
           className="serif"
@@ -1246,7 +946,7 @@ export default function Landing() {
               opacity: 0.6,
             }}
           />
-          Poly Hedge
+          PolyHedge
         </div>
         <ul className="footer-links">
           {["Markets", "Terms", "Privacy", "Docs", "Blog", "Discord"].map(
@@ -1261,9 +961,10 @@ export default function Landing() {
           className="mono"
           style={{ fontSize: ".65rem", color: "var(--cdim)", opacity: 0.5 }}
         >
-          ©️ 2025 Poly Hedge · All rights reserved
+          ©️ 2025 PolyHedge · All rights reserved
         </div>
       </footer>
+
       <ChatWindow />
     </>
   );

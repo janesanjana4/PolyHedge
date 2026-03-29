@@ -9,7 +9,7 @@ function ProfileIcon() {
 }
 
 export default function Navbar({ isAuthed, balance }) {
-  const links = ["Markets", "Leaderboard", "How It Works", "Categories"];
+  const links = ["Markets", "How It Works", "Categories"];
   const dashTo = isAuthed ? "/dashboard" : "/signup";
 
   return (
@@ -26,11 +26,14 @@ export default function Navbar({ isAuthed, balance }) {
         ))}
       </ul>
       <div className="nav-actions">
-        <div
-          className={`nav-bal mono${!isAuthed ? " nav-bal--guest" : ""}`}
-        >
+        <div className={`nav-bal mono${!isAuthed ? " nav-bal--guest" : ""}`}>
           {isAuthed ? `Balance: $${balance.toFixed(2)}` : "Balance: TBD"}
         </div>
+        {/* {!isAuthed && (
+          <Link to="/login" className="nav-cta nav-cta--ghost">
+            Log in
+          </Link>
+        )}*/}
         <Link
           to={dashTo}
           className="nav-profile"
@@ -39,9 +42,9 @@ export default function Navbar({ isAuthed, balance }) {
         >
           <ProfileIcon />
         </Link>
-        <Link to={dashTo} className="nav-cta">
+        {/* <Link to={dashTo} className="nav-cta">
           Dashboard
-        </Link>
+        </Link>*/}
       </div>
     </nav>
   );

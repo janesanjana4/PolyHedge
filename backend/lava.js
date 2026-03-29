@@ -65,4 +65,24 @@ async function analyzeWithK2(prompt) {
   return callLava(prompt, { model: "gpt-4o-mini", maxTokens: 600 });
 }
 
-export { callLava, analyzeBet, analyzeWithK2 };
+async function getHedgeRecommendation({ position, hedge }) {
+  const prompt = `You are a sharp crypto risk analyst. Be direct, max 3 sentences.
+
+Trader has: ${position.leverage}× ${position.side} at $${position.entry}
+Liquidation at: $${position.liqPrice} (${position.breakEvenMove} move)
+Max loss without hedge: $${Math.abs(position.maxLoss)}
+
+Proposed hedge: "${hedge.market.question}"
+Market probability: ${hedge.market.yesPct}%
+Hedge budget: $${hedge.hedgeBudget} → pays $${hedge.payout.toFixed(0)} if YES
+Worst case WITH hedge: $${Math.abs(hedge.netWorstCase).toFixed(0)} loss
+
+In exactly 3 sentences:
+1. Is this hedge well-matched to the position risk?
+2. What macro scenario makes both the liquidation AND this market happen together?
+3. Verdict: STRONG HEDGE / PARTIAL HEDGE / WEAK HEDGE and why.`;
+
+  return callLava(prompt, { model: "gpt-4o-mini", maxTokens: 250 });
+}
+
+export { callLava, analyzeBet, analyzeWithK2, getHedgeRecommendation };

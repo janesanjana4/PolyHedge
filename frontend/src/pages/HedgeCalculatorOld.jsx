@@ -11,15 +11,11 @@ import {
   CartesianGrid,
   Legend,
 } from "recharts";
-import { getUser } from "../lib/userSession";
-import { useNavigate } from "react-router-dom";
 
 const G = "#c6a15b";
 const YES_C = "#34d399";
 const NO_C = "#f87171";
 const BLUE = "#60a5fa";
-const API = import.meta.env.VITE_API_URL || "";
-const navigate = useNavigate();
 
 // ── Payoff math ───────────────────────────────────────────────────────────────
 function calcPayoff(positions) {
@@ -44,7 +40,7 @@ function calcPayoff(positions) {
   });
 }
 
-function calcIndividual(pos, label) {
+function calcIndividual(pos, label, color) {
   return Array.from({ length: 101 }, (_, p) => {
     const prob = p / 100;
     const price = Math.max(pos.yesPct, 1) / 100;
@@ -95,265 +91,6 @@ const HedgeTooltip = ({ active, payload, label }) => {
   );
 };
 
-// ── K2 Hedge Analysis ─────────────────────────────────────────────────────────
-function K2HedgeAnalysis({ position, hedge }) {
-  const [analysis, setAnalysis] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!position?.stake || !hedge?.id) return;
-
-    let cancelled = false;
-
-    const run = async () => {
-      setLoading(true);
-      setAnalysis("");
-
-      try {
-        const res = await fetch(`${API}/api/hedge-analysis`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            position: {
-              entry: 2400,
-              leverage: 10,
-              size: position.stake,
-              side: position.side,
-              hedgeBudget:
-                hedge.yesPct < 30
-                  ? parseFloat((position.stake * 0.05).toFixed(2))
-                  : parseFloat((position.stake * 0.08).toFixed(2)),
-            },
-            market: hedge,
-          }),
-        });
-        const d = await res.json();
-        if (!cancelled) {
-          setAnalysis(d.analysis || "");
-          setLoading(false);
-        }
-      } catch {
-        if (!cancelled) {
-          setAnalysis("K2 analysis unavailable right now.");
-          setLoading(false);
-        }
-      }
-    };
-
-    run();
-    return () => {
-      cancelled = true;
-    };
-  }, [hedge?.id, position?.stake, position?.side, hedge]);
-
-  if (loading)
-    return (
-      <div
-        style={{
-          fontFamily: "'JetBrains Mono',monospace",
-          fontSize: ".65rem",
-          color: "#555",
-          letterSpacing: ".04em",
-        }}
-      >
-        ⬡ K2 is analyzing this hedge…
-      </div>
-    );
-
-  if (!analysis) return null;
-
-  const lines = analysis.split("\n").filter((l) => l.trim().length > 0);
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: ".45rem" }}>
-      {lines.map((line, i) => (
-        <div
-          key={i}
-          style={{
-            fontFamily: "'JetBrains Mono',monospace",
-            fontSize: ".65rem",
-            color: i === lines.length - 1 ? G : "#999",
-            lineHeight: 1.75,
-            fontWeight: i === lines.length - 1 ? 600 : 400,
-          }}
-        >
-          {line}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Live Hedge Markets from Polymarket ────────────────────────────────────────
-function LiveHedgeMarkets({ side, onApply, selectedId }) {
-  const [markets, setMarkets] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const run = async () => {
-      setLoading(true);
-      try {
-        const r = await fetch(
-          `${API}/api/hedge-markets?asset=ETH&direction=${side}`,
-        );
-        const d = await r.json();
-        if (!cancelled) {
-          setMarkets(Array.isArray(d) ? d : []);
-          setLoading(false);
-        }
-      } catch {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    run();
-    return () => {
-      cancelled = true;
-    };
-  }, [side]);
-
-  if (loading)
-    return (
-      <div
-        style={{
-          border: "1px solid rgba(198,161,91,.15)",
-          borderRadius: 8,
-          padding: "1rem 1.25rem",
-          fontFamily: "'JetBrains Mono',monospace",
-          fontSize: ".62rem",
-          color: "#555",
-          letterSpacing: ".08em",
-        }}
-      >
-        ⬡ Scanning Polymarket for hedge candidates…
-      </div>
-    );
-
-  if (!markets.length) return null;
-
-  return (
-    <div
-      style={{
-        border: "1px solid rgba(198,161,91,.2)",
-        borderRadius: 8,
-        overflow: "hidden",
-        background: "rgba(198,161,91,.02)",
-      }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          padding: ".7rem 1.25rem",
-          borderBottom: "1px solid rgba(198,161,91,.1)",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          fontFamily: "'JetBrains Mono',monospace",
-          fontSize: ".58rem",
-          letterSpacing: ".15em",
-          textTransform: "uppercase",
-          color: G,
-        }}
-      >
-        <span
-          style={{
-            width: 5,
-            height: 5,
-            borderRadius: "50%",
-            background: YES_C,
-            display: "inline-block",
-            animation: "pdot 1.5s ease-in-out infinite",
-          }}
-        />
-        Live hedge candidates · Polymarket
-      </div>
-
-      {/* Market rows */}
-      {markets.slice(0, 4).map((m, i) => {
-        const isSelected = selectedId === m.id;
-        return (
-          <div
-            key={m.id}
-            onClick={() => onApply(m)}
-            style={{
-              padding: ".85rem 1.25rem",
-              borderBottom:
-                i < Math.min(markets.length, 4) - 1
-                  ? "1px solid rgba(255,255,255,.04)"
-                  : "none",
-              cursor: "pointer",
-              background: isSelected ? "rgba(198,161,91,.07)" : "transparent",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: 12,
-              transition: "background .15s",
-            }}
-            onMouseEnter={(e) => {
-              if (!isSelected)
-                e.currentTarget.style.background = "rgba(198,161,91,.04)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = isSelected
-                ? "rgba(198,161,91,.07)"
-                : "transparent";
-            }}
-          >
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div
-                style={{
-                  fontFamily: "'JetBrains Mono',monospace",
-                  fontSize: ".62rem",
-                  color: isSelected ? "#ddd" : "#aaa",
-                  marginBottom: 3,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {m.question}
-              </div>
-              <div
-                style={{
-                  fontFamily: "'JetBrains Mono',monospace",
-                  fontSize: ".57rem",
-                  color: "#444",
-                }}
-              >
-                {m.volumeFmt} vol
-              </div>
-            </div>
-            <div style={{ textAlign: "right", flexShrink: 0 }}>
-              <div
-                style={{
-                  fontFamily: "'JetBrains Mono',monospace",
-                  fontSize: ".88rem",
-                  fontWeight: 600,
-                  color: YES_C,
-                }}
-              >
-                {m.yesPct}%
-              </div>
-              <div
-                style={{
-                  fontFamily: "'JetBrains Mono',monospace",
-                  fontSize: ".55rem",
-                  color: isSelected ? G : "#444",
-                  marginTop: 2,
-                }}
-              >
-                {isSelected ? "✓ applied" : "click to apply"}
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 // ── Position input ────────────────────────────────────────────────────────────
 function PositionInput({ pos, index, onChange, onToggle }) {
   const color = index === 0 ? YES_C : BLUE;
@@ -385,11 +122,6 @@ function PositionInput({ pos, index, onChange, onToggle }) {
           }}
         >
           Position {index + 1}
-          {index === 1 && (
-            <span style={{ color: "#555", fontWeight: 400, marginLeft: 8 }}>
-              · hedge
-            </span>
-          )}
         </span>
         <button
           onClick={onToggle}
@@ -433,11 +165,7 @@ function PositionInput({ pos, index, onChange, onToggle }) {
           <input
             value={pos.question}
             onChange={(e) => onChange("question", e.target.value)}
-            placeholder={
-              index === 0
-                ? "e.g. Will BTC exceed $100K?"
-                : "Select from candidates below or type"
-            }
+            placeholder="e.g. Will BTC exceed $100K?"
             style={{
               width: "100%",
               boxSizing: "border-box",
@@ -681,13 +409,10 @@ function StatsBar({ data, positions }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function HedgeCalculator() {
-  const navigate = useNavigate();
   const [positions, setPositions] = useState([
     { question: "", yesPct: 60, stake: 100, side: "yes", active: true },
     { question: "", yesPct: 40, stake: 100, side: "no", active: true },
   ]);
-  const [selectedHedge, setSelectedHedge] = useState(null);
-  const [showExecution, setShowExecution] = useState(false);
 
   function updatePos(index, field, value) {
     setPositions((prev) =>
@@ -700,24 +425,15 @@ export default function HedgeCalculator() {
     );
   }
 
-  // Apply a live Polymarket market as the hedge (Position 2)
-  function applyHedge(market) {
-    setSelectedHedge(market);
-    updatePos(1, "question", market.question);
-    updatePos(1, "yesPct", market.yesPct);
-    updatePos(1, "side", "yes");
-    updatePos(1, "active", true);
-  }
-
   const activePosCount = positions.filter(
     (p) => p.active && p.stake > 0 && p.yesPct > 0,
   ).length;
   const combinedData = calcPayoff(positions.filter((p) => p.active));
   const p1Data = positions[0].active
-    ? calcIndividual(positions[0], "pos1")
+    ? calcIndividual(positions[0], "pos1", YES_C)
     : combinedData.map((d) => ({ prob: d.prob, pos1: 0 }));
   const p2Data = positions[1].active
-    ? calcIndividual(positions[1], "pos2")
+    ? calcIndividual(positions[1], "pos2", BLUE)
     : combinedData.map((d) => ({ prob: d.prob, pos2: 0 }));
   const chartData = mergeData(combinedData, p1Data, p2Data);
 
@@ -762,7 +478,7 @@ export default function HedgeCalculator() {
             marginBottom: ".5rem",
           }}
         >
-          Advanced Tools · Polymarket Live Data
+          Advanced Tools
         </div>
         <h1
           style={{
@@ -784,8 +500,8 @@ export default function HedgeCalculator() {
             margin: 0,
           }}
         >
-          Build a two-position hedge strategy. Select a live Polymarket contract
-          as your hedge — see combined payoff instantly.
+          Combine two positions and visualize your combined payoff across all
+          resolution probabilities.
         </p>
       </div>
 
@@ -800,22 +516,12 @@ export default function HedgeCalculator() {
       >
         {/* ── Left: Inputs ── */}
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          {/* Position 1 — your main bet */}
           <PositionInput
             pos={positions[0]}
             index={0}
             onChange={(f, v) => updatePos(0, f, v)}
             onToggle={() => togglePos(0)}
           />
-
-          {/* ── LIVE HEDGE CANDIDATES FROM POLYMARKET ── */}
-          <LiveHedgeMarkets
-            side={positions[0].side}
-            onApply={applyHedge}
-            selectedId={selectedHedge?.id}
-          />
-
-          {/* Position 2 — auto-populated from hedge selection, or manual */}
           <PositionInput
             pos={positions[1]}
             index={1}
@@ -823,37 +529,8 @@ export default function HedgeCalculator() {
             onToggle={() => togglePos(1)}
           />
 
-          {/* ── K2 ANALYSIS — shows when hedge is selected ── */}
-          {selectedHedge && (
-            <div
-              style={{
-                border: "1px solid rgba(198,161,91,.2)",
-                borderRadius: 8,
-                padding: "1rem 1.25rem",
-                background: "rgba(198,161,91,.04)",
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: "'JetBrains Mono',monospace",
-                  fontSize: ".6rem",
-                  letterSpacing: ".12em",
-                  textTransform: "uppercase",
-                  color: G,
-                  marginBottom: ".6rem",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                ⬡ K2 hedge analysis
-              </div>
-              <K2HedgeAnalysis position={positions[0]} hedge={selectedHedge} />
-            </div>
-          )}
-
-          {/* Static hedge suggestion when no market selected yet */}
-          {!selectedHedge && activePosCount === 2 && (
+          {/* Hedge suggestion */}
+          {activePosCount === 2 && (
             <div
               style={{
                 border: "1px solid rgba(198,161,91,.15)",
@@ -906,60 +583,6 @@ export default function HedgeCalculator() {
 
               <div
                 style={{
-                  marginBottom: "1rem",
-                  display: "flex",
-                  gap: "1rem",
-                }}
-              >
-                <button
-                  onClick={() => {
-                    const u = getUser();
-
-                    if (!u) {
-                      navigate("/signup");
-                      return;
-                    }
-
-                    setShowExecution(true);
-                  }}
-                  style={{
-                    flex: 1,
-                    padding: ".9rem",
-                    fontFamily: "'JetBrains Mono',monospace",
-                    fontSize: ".7rem",
-                    letterSpacing: ".1em",
-                    textTransform: "uppercase",
-                    background: "#c6a15b",
-                    color: "#0a0a0a",
-                    border: "none",
-                    borderRadius: 6,
-                    cursor: "pointer",
-                  }}
-                >
-                  ⬡ Execute Hedge
-                </button>
-
-                <button
-                  style={{
-                    flex: 1,
-                    padding: ".9rem",
-                    fontFamily: "'JetBrains Mono',monospace",
-                    fontSize: ".7rem",
-                    letterSpacing: ".1em",
-                    textTransform: "uppercase",
-                    background: "rgba(198,161,91,.08)",
-                    color: "#c6a15b",
-                    border: "1px solid rgba(198,161,91,.3)",
-                    borderRadius: 6,
-                    cursor: "pointer",
-                  }}
-                >
-                  Simulate Strategy
-                </button>
-              </div>
-
-              <div
-                style={{
                   border: "1px solid rgba(255,255,255,.06)",
                   borderRadius: 8,
                   padding: "1.5rem",
@@ -997,33 +620,6 @@ export default function HedgeCalculator() {
                       Expected profit/loss at each resolution probability
                     </div>
                   </div>
-                  {selectedHedge && (
-                    <div
-                      style={{
-                        fontFamily: "'JetBrains Mono',monospace",
-                        fontSize: ".58rem",
-                        color: YES_C,
-                        background: "rgba(52,211,153,.08)",
-                        border: "1px solid rgba(52,211,153,.2)",
-                        padding: "3px 10px",
-                        borderRadius: 20,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 5,
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: 4,
-                          height: 4,
-                          borderRadius: "50%",
-                          background: YES_C,
-                          display: "inline-block",
-                        }}
-                      />
-                      Live hedge applied
-                    </div>
-                  )}
                 </div>
 
                 <ResponsiveContainer width="100%" height={320}>
@@ -1112,9 +708,7 @@ export default function HedgeCalculator() {
                       <Area
                         type="monotone"
                         dataKey="pos2"
-                        name={
-                          selectedHedge ? "Hedge (Polymarket)" : "Position 2"
-                        }
+                        name="Position 2"
                         stroke={BLUE}
                         strokeWidth={1.5}
                         fill="url(#p2Grad)"
@@ -1166,70 +760,6 @@ export default function HedgeCalculator() {
           )}
         </div>
       </div>
-      {showExecution && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,.7)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 999,
-          }}
-        >
-          <div
-            style={{
-              width: 420,
-              background: "#0d0d0d",
-              border: "1px solid rgba(198,161,91,.3)",
-              borderRadius: 10,
-              padding: "1.5rem",
-            }}
-          >
-            <div
-              style={{
-                fontFamily: "'JetBrains Mono',monospace",
-                fontSize: ".7rem",
-                color: "#c6a15b",
-                marginBottom: "1rem",
-              }}
-            >
-              ⬡ Hedge Execution Preview
-            </div>
-
-            <div
-              style={{
-                fontFamily: "'JetBrains Mono',monospace",
-                fontSize: ".65rem",
-                color: "#aaa",
-                lineHeight: 1.6,
-                marginBottom: "1.25rem",
-              }}
-            >
-              Strategy will place a hedge using selected Polymarket contract.
-              <br />
-              <br />
-              This simulates execution — no real funds used.
-            </div>
-
-            <button
-              onClick={() => setShowExecution(false)}
-              style={{
-                width: "100%",
-                padding: ".8rem",
-                background: "#c6a15b",
-                color: "#0a0a0a",
-                border: "none",
-                borderRadius: 6,
-                cursor: "pointer",
-              }}
-            >
-              Confirm Execution (Mock)
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

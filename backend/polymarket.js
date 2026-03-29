@@ -43,7 +43,7 @@ async function getMarkets({ keyword = "", limit = 6 } = {}) {
   try {
     // Fetch a large pool sorted by volume
     const res = await fetch(
-      `${GAMMA_BASE}/markets?active=true&closed=false&limit=1000&order=volume&ascending=false`
+      `${GAMMA_BASE}/markets?active=true&closed=false&limit=1000&order=volume&ascending=false`,
     );
     if (!res.ok) throw new Error(`Polymarket error: ${res.status}`);
 
@@ -57,7 +57,7 @@ async function getMarkets({ keyword = "", limit = 6 } = {}) {
     // Filter client-side
     const k = keyword.toLowerCase();
     const filtered = all.filter((m) =>
-      (m.question + " " + m.slug + " " + m.category).toLowerCase().includes(k)
+      (m.question + " " + m.slug + " " + m.category).toLowerCase().includes(k),
     );
 
     return filtered.slice(0, limit);
@@ -76,5 +76,27 @@ async function getHeroMarket() {
   return markets.sort((a, b) => b.volume - a.volume)[0];
 }
 
+async function getHedgeMarkets(asset = "ETH", direction = "long") {
+  const keywords =
+    direction === "long"
+      ? [`${asset} below`, "recession", "oil above", "crash"]
+      : [`${asset} above`, "ceasefire", "rally", "risk"];
+
+  const results = await Promise.all(
+    keywords.map((kw) => getMarkets({ keyword: kw, limit: 3 })),
+  );
+
+  const seen = new Set();
+  return results
+    .flat()
+    .filter((m) => {
+      if (seen.has(m.id)) return false;
+      seen.add(m.id);
+      return true;
+    })
+    .sort((a, b) => b.volume - a.volume)
+    .slice(0, 4);
+}
+
 // ── EXPORTS ───────────────────────────────────────────────
-module.exports = { getMarkets, getHeroMarket };
+module.exports = { getMarkets, getHeroMarket, getHedgeMarkets };
