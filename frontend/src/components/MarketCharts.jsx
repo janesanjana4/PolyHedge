@@ -5,6 +5,7 @@ import {
   ResponsiveContainer, Area, AreaChart, CartesianGrid,
   BarChart, Bar, Cell,
 } from "recharts";
+import AlphaSignalPanel from "./AlphaSignalPanel";
 
 const G     = "#c6a15b";
 const YES_C = "#34d399";
@@ -145,7 +146,6 @@ export default function MarketCharts({ market }) {
             <span style={{ color: "#666" }}>Closes {formatDate(market.endDate)}</span>
           </div>
         </div>
-        {/* Stake selector lives in header so it applies to payoff */}
         <div style={{ display: "flex", alignItems: "center", gap: ".4rem" }}>
           <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: ".6rem", color: "#555" }}>Stake</span>
           {[25, 100, 500].map((a) => (
@@ -162,12 +162,9 @@ export default function MarketCharts({ market }) {
       {/* 3 charts in a row */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1px", background: "rgba(255,255,255,.04)" }}>
 
-        {/* ── Payoff Curve ── */}
+        {/* Payoff Curve */}
         <div style={{ background: "rgba(10,10,10,.95)", padding: "1.25rem 1.5rem" }}>
-          <ChartCard
-            title="Payoff Curve"
-            sub="Expected profit vs resolution probability"
-          >
+          <ChartCard title="Payoff Curve" sub="Expected profit vs resolution probability">
             <StatRow items={[
               ["Breakeven", `${breakeven}%`, G],
               ["Max profit", `+$${maxProfit}`, YES_C],
@@ -193,7 +190,7 @@ export default function MarketCharts({ market }) {
           </ChartCard>
         </div>
 
-        {/* ── Price History ── */}
+        {/* Price History */}
         <div style={{ background: "rgba(10,10,10,.95)", padding: "1.25rem 1.5rem", borderLeft: "1px solid rgba(255,255,255,.04)", borderRight: "1px solid rgba(255,255,255,.04)" }}>
           <ChartCard
             title="Price History"
@@ -223,7 +220,7 @@ export default function MarketCharts({ market }) {
           </ChartCard>
         </div>
 
-        {/* ── Orderbook Depth ── */}
+        {/* Orderbook Depth */}
         <div style={{ background: "rgba(10,10,10,.95)", padding: "1.25rem 1.5rem" }}>
           <ChartCard
             title="Orderbook Depth"
@@ -256,8 +253,11 @@ export default function MarketCharts({ market }) {
             </ResponsiveContainer>
           </ChartCard>
         </div>
-
       </div>
+
+      {/* Alpha Signal Panel — sits below the 3 charts */}
+      <AlphaSignalPanel market={market} />
+
     </div>
   );
 }

@@ -5,7 +5,9 @@ import MarketCharts from "../components/MarketCharts";
 import CrossMarketScanner from "../components/CrossMarketScanner";
 
 const API_BASE = "http://localhost:3001";
-const G = "#c6a15b";
+const G        = "#c6a15b";
+const YES_C    = "#34d399";
+const NO_C     = "#f87171";
 
 const SECTORS = [
   { key: "all",      label: "All",      keyword: "",          icon: "⬡" },
@@ -19,6 +21,139 @@ const SECTORS = [
 function formatDate(d) {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+// ── AI Insight Button + Dropdown ──────────────────────────────────────────────
+function AIInsightButton({ market }) {
+  const [open, setOpen]       = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [insight, setInsight] = useState(null);
+  const [error, setError]     = useState(null);
+  const ref                   = useRef(null);
+
+  // Close on outside click
+  useEffect(() => {
+    function handleClick(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    }
+    if (open) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  async function fetchInsight() {
+    if (insight) { setOpen(true); return; } // already fetched
+    setOpen(true);
+    setLoading(true);
+    setError(null);
+    try {
+      const res  = await fetch(`${API_BASE}/api/analyze-bet`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: market.question,
+          yesPct:   market.yesPct,
+          side:     "yes",
+          amount:   100,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.analysis) setInsight(data.analysis);
+      else setError("No analysis returned.");
+    } catch {
+      setError("Server offline — run: node server.js");
+    }
+    setLoading(false);
+  }
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        onClick={(e) => { e.stopPropagation(); fetchInsight(); }}
+        style={{
+          fontFamily: "'JetBrains Mono',monospace",
+          fontSize: ".6rem",
+          letterSpacing: ".08em",
+          textTransform: "uppercase",
+          padding: "5px 10px",
+          borderRadius: 4,
+          border: `1px solid rgba(198,161,91,.3)`,
+          background: "rgba(198,161,91,.06)",
+          color: G,
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: 5,
+          transition: "all .15s",
+          width: "100%",
+          justifyContent: "center",
+          marginTop: ".5rem",
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(198,161,91,.12)"; e.currentTarget.style.borderColor = G; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(198,161,91,.06)"; e.currentTarget.style.borderColor = "rgba(198,161,91,.3)"; }}
+      >
+        ⬡ K2 AI Insight
+      </button>
+
+      {open && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            position: "absolute",
+            bottom: "calc(100% + 8px)",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: 320,
+            background: "#0d0d0d",
+            border: "1px solid rgba(198,161,91,.3)",
+            borderRadius: 8,
+            padding: "1rem 1.25rem",
+            zIndex: 200,
+            boxShadow: "0 8px 32px rgba(0,0,0,.6)",
+          }}
+        >
+          {/* Header */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: ".75rem" }}>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: ".62rem", letterSpacing: ".12em", textTransform: "uppercase", color: G }}>
+              ⬡ K2 AI Insight
+            </span>
+            <button onClick={() => setOpen(false)} style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: ".8rem", padding: 0 }}>✕</button>
+          </div>
+
+          {/* Market context */}
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: ".6rem", color: "#666", marginBottom: ".75rem", paddingBottom: ".75rem", borderBottom: "1px solid rgba(255,255,255,.05)" }}>
+            <span style={{ color: YES_C }}>{market.yesPct}% YES</span>
+            <span style={{ color: "#444", margin: "0 6px" }}>·</span>
+            <span>{market.volumeFmt} vol</span>
+            <span style={{ color: "#444", margin: "0 6px" }}>·</span>
+            <span>Closes {formatDate(market.endDate)}</span>
+          </div>
+
+          {/* Content */}
+          {loading && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'JetBrains Mono',monospace", fontSize: ".65rem", color: "#555", padding: ".5rem 0" }}>
+              <span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>⬡</span>
+              Analyzing market…
+            </div>
+          )}
+          {error && (
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: ".65rem", color: NO_C }}>{error}</div>
+          )}
+          {insight && !loading && (
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: ".65rem", color: "#bbb", lineHeight: 1.7 }}>
+              {insight}
+            </div>
+          )}
+
+          {/* Footer */}
+          <div style={{ marginTop: ".75rem", paddingTop: ".6rem", borderTop: "1px solid rgba(255,255,255,.04)", fontFamily: "'JetBrains Mono',monospace", fontSize: ".55rem", color: "#333" }}>
+            AI analysis only. Not financial advice.
+          </div>
+        </div>
+      )}
+
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
 }
 
 // ── Market Card ───────────────────────────────────────────────────────────────
@@ -55,6 +190,10 @@ function MarketCard({ market, sectorKey, isSelected, onClick }) {
           <button className="s-yn-btn s-yn-no" onClick={(e) => e.stopPropagation()}>NO ▼</button>
         </div>
       </div>
+
+      {/* AI Insight button */}
+      <AIInsightButton market={market} />
+
       <div style={{
         marginTop: ".5rem", textAlign: "center",
         fontFamily: "'JetBrains Mono',monospace", fontSize: ".6rem",
@@ -178,11 +317,9 @@ export default function Sector() {
       const data = await res.json();
       const raw  = JSON.stringify(data, null, 2);
       setRawBody(raw.length > 900 ? raw.slice(0, 900) + `\n\n… (${raw.length - 900} more chars)` : raw);
-
       if (!data.success) { setApiBadge({ text: `✗ ${data.error || "API error"}`, cls: "err" }); setStatus("error"); return; }
       const list = data.markets || [];
       if (!list.length) { setApiBadge({ text: "✗ No markets returned", cls: "err" }); setStatus("empty"); return; }
-
       setApiBadge({ text: `✓ ${list.length} markets loaded`, cls: "ok" });
       setMarkets(list);
       setStatus("ok");
@@ -200,7 +337,6 @@ export default function Sector() {
 
   return (
     <>
-      {/* ── Back ── */}
       <div style={{ padding: "1.25rem 2rem 0" }}>
         <Link to="/"
           style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: ".7rem", letterSpacing: ".1em", color: "#666", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
@@ -211,7 +347,6 @@ export default function Sector() {
         </Link>
       </div>
 
-      {/* ── Header ── */}
       <div className="s-header">
         <div className="s-eyebrow">Live Data · Polymarket API</div>
         <h1 className="s-h1">Sector: <em>{sector.label}</em></h1>
@@ -221,7 +356,6 @@ export default function Sector() {
         </div>
       </div>
 
-      {/* ── Tabs ── */}
       <div className="s-tabs">
         {SECTORS.map((s) => (
           <button key={s.key} className={`s-tab${activeSector === s.key ? " active" : ""}`} onClick={() => switchSector(s.key)}>
@@ -230,7 +364,6 @@ export default function Sector() {
         ))}
       </div>
 
-      {/* ── Raw Panel ── */}
       <div className="s-raw-panel">
         <div className="s-raw-header">
           <span className="s-raw-label">⬡ Raw API Response</span>
@@ -239,7 +372,6 @@ export default function Sector() {
         <div className="s-raw-body">{rawBody}</div>
       </div>
 
-      {/* ── Grid ── */}
       <div className="s-grid-wrap">
         <div className="s-grid-meta">
           <span>
@@ -251,7 +383,6 @@ export default function Sector() {
           {status === "ok" && <span className="s-grid-src">Source: gamma-api.polymarket.com</span>}
         </div>
 
-        {/* Cross-Market Scanner */}
         {status === "ok" && <CrossMarketScanner markets={markets} />}
 
         <div className="s-grid">
@@ -264,26 +395,21 @@ export default function Sector() {
             return rows.map((row, rowIdx) => (
               <React.Fragment key={rowIdx}>
                 {row.map((m, i) => (
-                  <MarketCard
-                    key={m.id || i}
-                    market={m}
-                    sectorKey={activeSector}
+                  <MarketCard key={m.id || i} market={m} sectorKey={activeSector}
                     isSelected={selectedMarket?.id === m.id}
-                    onClick={() => handleCardClick(m)}
-                  />
+                    onClick={() => handleCardClick(m)} />
                 ))}
-                {row.some((m) => m.id === selectedMarket?.id) && selectedMarket?.yesPct !== undefined && (
-                    <div style={{ gridColumn: "1 / -1" }}>
-                      <MarketCharts market={selectedMarket} />
-                    </div>
-                  )}
+                {row.some((m) => m.id === selectedMarket?.id) && (
+                  <div style={{ gridColumn: "1 / -1" }}>
+                    <MarketCharts market={selectedMarket} />
+                  </div>
+                )}
               </React.Fragment>
             ));
           })()}
         </div>
       </div>
 
-      {/* ── Floating Chat ── */}
       <div className="s-chat-bubble">
         <ChatWindow isOpen={chatOpen} onClose={() => setChatOpen(false)} />
         <button className="s-chat-toggle" onClick={() => setChatOpen((v) => !v)} title="Ask K2 Analyst">⬡</button>
