@@ -3,6 +3,7 @@ import "./App.css";
 import Landing from "./pages/Landing";
 import Sector from "./pages/Sector";
 import Survey from "./pages/Survey";
+import Login from "./pages/Login";
 import HedgeCalculator from "./pages/HedgeCalculator";
 import Dashboard from "./pages/Dashboard";
 
@@ -13,6 +14,7 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/sector" element={<Sector />} />
         <Route path="/signup" element={<Survey />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/hedge-calculator" element={<HedgeCalculator />} />
       </Routes>

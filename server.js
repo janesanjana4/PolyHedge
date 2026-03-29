@@ -10,6 +10,7 @@ const {
   registerAuthSignupRoutes,
   getAuth0Env,
 } = require("./routes/authSignup");
+const { registerAuthLoginRoutes } = require("./routes/authLogin");
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 registerAuthSignupRoutes(app);
+registerAuthLoginRoutes(app);
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", lava: !!process.env.LAVA_API_KEY ? "✅" : "❌" });

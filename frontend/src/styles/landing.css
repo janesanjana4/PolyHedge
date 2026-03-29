@@ -160,6 +160,18 @@ body::after {
     background: #e2bc72;
 }
 
+.nav-cta--ghost {
+    color: #8c8676;
+    background: transparent;
+    border: 0.5px solid rgba(198, 161, 91, 0.35);
+}
+
+.nav-cta--ghost:hover {
+    color: #c6a15b;
+    border-color: #c6a15b;
+    background: rgba(198, 161, 91, 0.06);
+}
+
 a.nav-cta {
     text-decoration: none;
     display: inline-flex;

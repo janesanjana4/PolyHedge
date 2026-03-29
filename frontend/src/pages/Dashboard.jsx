@@ -7,6 +7,7 @@ import {
   SECTOR_LABELS,
   SECTOR_TO_PAGE,
 } from "../lib/userSession";
+import { clearAuthTokens } from "../lib/authSession";
 import { API } from "../data/constants";
 
 const G = "#c6a15b";
@@ -196,6 +197,7 @@ export default function Dashboard() {
           <button
             type="button"
             onClick={() => {
+              clearAuthTokens();
               clearUser();
               navigate("/signup");
             }}
@@ -635,6 +637,7 @@ export default function Dashboard() {
           <button
             type="button"
             onClick={() => {
+              clearAuthTokens();
               clearUser();
               navigate("/signup");
             }}

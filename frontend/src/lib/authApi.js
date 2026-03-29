@@ -32,3 +32,38 @@ export async function signupWithAuth0(payload) {
 
   return data;
 }
+
+/**
+ * @param {{ email: string, password: string }} payload
+ */
+export async function loginWithAuth0(payload) {
+  const res = await fetch(`${API}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  let data = {};
+  try {
+    data = await res.json();
+  } catch {
+    data = {};
+  }
+
+  if (!res.ok) {
+    const fromDetails =
+      Array.isArray(data.details) && data.details.length
+        ? data.details.map((d) => d.message).join(" ")
+        : null;
+    let msg =
+      data.error || fromDetails || data.message || `Login failed (${res.status})`;
+    if (data.hint) msg = `${msg} ${data.hint}`;
+    const err = new Error(msg);
+    err.details = data.details;
+    err.auth0 = data.auth0;
+    err.hint = data.hint;
+    throw err;
+  }
+
+  return data;
+}

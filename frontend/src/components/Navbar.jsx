@@ -31,6 +31,11 @@ export default function Navbar({ isAuthed, balance }) {
         >
           {isAuthed ? `Balance: $${balance.toFixed(2)}` : "Balance: TBD"}
         </div>
+        {!isAuthed && (
+          <Link to="/login" className="nav-cta nav-cta--ghost">
+            Log in
+          </Link>
+        )}
         <Link
           to={dashTo}
           className="nav-profile"
