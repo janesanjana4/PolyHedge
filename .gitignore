@@ -1,7 +1,14 @@
+<<<<<<< Updated upstream
 # Root app (Express) + any workspace-wide junk
 node_modules/
 .env
 .DS_Store
 dist/
+=======
+node_modules/
+.env
+.DS_Store
+dist
+>>>>>>> Stashed changes
 *.log
 npm-debug.log*
