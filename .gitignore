@@ -1,0 +1,7 @@
+# Root app (Express) + any workspace-wide junk
+node_modules/
+.env
+.DS_Store
+dist/
+*.log
+npm-debug.log*

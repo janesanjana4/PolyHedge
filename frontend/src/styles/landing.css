@@ -94,6 +94,12 @@ body::after {
     color: #c6a15b;
 }
 
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .nav-bal {
     font-family: "JetBrains Mono", monospace;
     font-size: 0.78rem;
@@ -102,6 +108,36 @@ body::after {
     background: rgba(198, 161, 91, 0.07);
     padding: 6px 14px;
     border: 0.5px solid rgba(198, 161, 91, 0.28);
+}
+
+.nav-bal--guest {
+    color: var(--cdim);
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.nav-profile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 0.5px solid rgba(198, 161, 91, 0.35);
+    background: rgba(198, 161, 91, 0.08);
+    color: var(--cdim);
+    transition: border-color 0.2s, color 0.2s;
+    flex-shrink: 0;
+}
+
+.nav-profile:hover {
+    border-color: #c6a15b;
+    color: #c6a15b;
+}
+
+.nav-profile svg {
+    width: 18px;
+    height: 18px;
 }
 
 .nav-cta {
@@ -122,6 +158,13 @@ body::after {
 
 .nav-cta:hover {
     background: #e2bc72;
+}
+
+a.nav-cta {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* ── Win popup ── */
@@ -312,8 +355,13 @@ body::after {
     transition: all 0.18s;
 }
 
+.chip:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
 .chip.active,
-.chip:hover {
+.chip:not(:disabled):hover {
     background: rgba(198, 161, 91, 0.14);
     border-color: #c6a15b;
     color: #c6a15b;
@@ -338,6 +386,12 @@ body::after {
     overflow: hidden;
     cursor: pointer;
     transition: all 0.2s;
+}
+
+.odds-side.bet-locked {
+    cursor: not-allowed;
+    opacity: 0.42;
+    pointer-events: none;
 }
 
 .odds-side.yes {
@@ -384,6 +438,15 @@ body::after {
 
 .place-btn:hover {
     background: #e2bc72;
+}
+
+.place-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.place-btn:disabled:hover {
+    background: #c6a15b;
 }
 
 /* ── Ticker ── */
@@ -535,6 +598,17 @@ section {
 .m-bet-yes:hover {
     background: rgba(52, 211, 153, 0.1);
     border-color: rgba(52, 211, 153, 0.5);
+}
+
+.m-bet-yes:disabled,
+.m-bet-no:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.m-bet-yes:disabled:hover,
+.m-bet-no:disabled:hover {
+    background: none;
 }
 
 .m-bet-no {
@@ -786,6 +860,12 @@ section {
     text-transform: uppercase;
     cursor: pointer;
     transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    white-space: nowrap;
 }
 
 .cta-submit:hover {

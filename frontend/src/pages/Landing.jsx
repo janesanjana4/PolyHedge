@@ -20,7 +20,7 @@ import {
   V_TRD,
   AVATARS,
 } from "../data/constants";
-import { getUser } from "../lib/userSession";
+import { getUser, patchUser } from "../lib/userSession";
 
 const G = "#c6a15b";
 const GB = "#e2bc72";
@@ -38,7 +38,8 @@ const KEYWORD_MAP = {
 };
 
 export default function Landing() {
-  const [balance, setBalance] = useState(1000);
+  const [sessionRev, setSessionRev] = useState(0);
+  const [balance, setBalance] = useState(0);
   const [streak, setStreak] = useState(0);
   const [betAmount, setBetAmount] = useState(10);
   const [side, setSide] = useState(null);
@@ -49,6 +50,28 @@ export default function Landing() {
   const [vIdx, setVIdx] = useState(0);
   const [feed, setFeed] = useState([]);
   const popupTimer = useRef(null);
+
+  useEffect(() => {
+    const bump = () => setSessionRev((n) => n + 1);
+    window.addEventListener("storage", bump);
+    window.addEventListener("focus", bump);
+    return () => {
+      window.removeEventListener("storage", bump);
+      window.removeEventListener("focus", bump);
+    };
+  }, []);
+
+  useEffect(() => {
+    const u = getUser();
+    if (u) {
+      setBalance(u.balance);
+      setStreak(u.streak ?? 0);
+    } else {
+      setBalance(0);
+      setStreak(0);
+      setSide(null);
+    }
+  }, [sessionRev]);
 
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -118,6 +141,15 @@ export default function Landing() {
   };
 
   const placeBet = () => {
+    const u = getUser();
+    if (!u) {
+      showPopup(
+        "Sign up to place bets.",
+        "Create a free account to get a balance and wager.",
+        false,
+      );
+      return;
+    }
     if (!side) {
       showPopup("Pick YES or NO first.", "↑ Choose your side above", false);
       return;
@@ -138,8 +170,11 @@ export default function Landing() {
     const prob = side === "yes" ? m.yesPct / 100 : m.noPct / 100;
     const payout = parseFloat((betAmount / prob).toFixed(2));
     const win = Math.random() < 0.58;
-    setBalance((b) => b - betAmount + (win ? payout : 0));
-    setStreak((s) => (win ? s + 1 : 0));
+    const newBalance = balance - betAmount + (win ? payout : 0);
+    const newStreak = win ? streak + 1 : 0;
+    setBalance(newBalance);
+    setStreak(newStreak);
+    patchUser({ balance: newBalance, streak: newStreak });
     showPopup(
       win ? "You called it right!" : "Better luck next time.",
       win
@@ -150,13 +185,25 @@ export default function Landing() {
   };
 
   const quickBet = () => {
+    const u = getUser();
+    if (!u) {
+      showPopup(
+        "Sign up to bet on markets.",
+        "Use Get Started — create an account in under a minute.",
+        false,
+      );
+      return;
+    }
     if (betAmount <= 0 || betAmount > balance) {
       showPopup("Set a stake first.", "↑ Scroll up to pick a chip", false);
       return;
     }
     const win = Math.random() < 0.6;
-    setBalance((b) => b - betAmount + (win ? betAmount * 1.7 : 0));
-    setStreak((s) => (win ? s + 1 : 0));
+    const newBalance = balance - betAmount + (win ? betAmount * 1.7 : 0);
+    const newStreak = win ? streak + 1 : 0;
+    setBalance(newBalance);
+    setStreak(newStreak);
+    patchUser({ balance: newBalance, streak: newStreak });
     showPopup(
       win ? "Winner!" : "No luck this time.",
       win ? `+$${(betAmount * 0.7).toFixed(2)} profit` : "Stake settled",
@@ -167,11 +214,19 @@ export default function Landing() {
   const p = V_PROBS[vIdx],
     circ = 452.4;
 
+  const user = getUser();
+  const isAuthed = !!user;
+  const betLocked = !isAuthed;
+
+  const scrollToHeroMarket = () => {
+    document.getElementById("hero-market")?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <>
       <Constellation />
       <WinPopup data={popup} />
-      <Navbar balance={balance} />
+      <Navbar isAuthed={isAuthed} balance={balance} />
 
       {/* HERO */}
       <section className="hero">
@@ -225,18 +280,20 @@ export default function Landing() {
             </span>
           </div>
           <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-            <button className="btn-primary">Place Your Bet</button>
+            <button type="button" className="btn-primary" onClick={scrollToHeroMarket}>
+              Place Your Bet
+            </button>
 
             <Link
-              to={getUser() ? "/dashboard" : "/signup"}
+              to={isAuthed ? "/dashboard" : "/signup"}
               className="btn-ghost"
             >
-              Place your bets
+              Get Started
             </Link>
           </div>
         </div>
 
-        <div>
+        <div id="hero-market">
           <div className="hero-card">
             <div
               style={{
@@ -322,6 +379,8 @@ export default function Landing() {
                 {[10, 25, 50, 100].map((a) => (
                   <button
                     key={a}
+                    type="button"
+                    disabled={betLocked}
                     className={`chip${betAmount === a ? " active" : ""}`}
                     onClick={() => setBetAmount(a)}
                   >
@@ -332,6 +391,8 @@ export default function Landing() {
                   className="chip-custom"
                   type="number"
                   placeholder="other"
+                  disabled={betLocked}
+                  readOnly={betLocked}
                   onChange={(e) =>
                     setBetAmount(parseFloat(e.target.value) || 0)
                   }
@@ -348,8 +409,17 @@ export default function Landing() {
                 {["yes", "no"].map((s) => (
                   <div
                     key={s}
-                    className={`odds-side ${s}${side === s ? " sel" : ""}`}
-                    onClick={() => setSide(s)}
+                    className={`odds-side ${s}${side === s ? " sel" : ""}${betLocked ? " bet-locked" : ""}`}
+                    onClick={() => !betLocked && setSide(s)}
+                    role="button"
+                    tabIndex={betLocked ? -1 : 0}
+                    onKeyDown={(e) => {
+                      if (betLocked) return;
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSide(s);
+                      }
+                    }}
                   >
                     <div
                       className="mono"
@@ -401,7 +471,33 @@ export default function Landing() {
                   </div>
                 ))}
               </div>
-              <button className="place-btn" onClick={placeBet}>
+              {betLocked && (
+                <p
+                  className="mono"
+                  style={{
+                    fontSize: ".65rem",
+                    letterSpacing: ".06em",
+                    color: "var(--cdim)",
+                    margin: "0 0 1rem",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Betting is locked until you have an account.{" "}
+                  <Link
+                    to="/signup"
+                    style={{ color: G, textDecoration: "underline" }}
+                  >
+                    Get started
+                  </Link>{" "}
+                  — you will start with paper balance on your dashboard.
+                </p>
+              )}
+              <button
+                type="button"
+                className="place-btn"
+                onClick={placeBet}
+                disabled={betLocked}
+              >
                 ⬡ &nbsp;Place Your Bet
               </button>
             </div>
@@ -612,13 +708,17 @@ export default function Landing() {
                   }}
                 >
                   <button
+                    type="button"
                     className="m-bet-yes"
+                    disabled={!isAuthed}
                     onClick={() => quickBet(i, "yes")}
                   >
                     Bet YES ▲
                   </button>
                   <button
+                    type="button"
                     className="m-bet-no"
+                    disabled={!isAuthed}
                     onClick={() => quickBet(i, "no")}
                   >
                     Bet NO ▼
@@ -1109,8 +1209,9 @@ export default function Landing() {
             lineHeight: 1.8,
           }}
         >
-          Join thousands of bettors turning market insight into real returns.
-          Start with $1,000 in virtual credits — no deposit required.
+          Join thousands of bettors turning market insight into paper returns.
+          Sign up for a local profile — $1,000 virtual credits unlock betting
+          on the landing page and your dashboard.
         </p>
         <div className="cta-input-row">
           <input
@@ -1118,7 +1219,12 @@ export default function Landing() {
             type="email"
             placeholder="Enter your email to start betting"
           />
-          <button className="cta-submit">Place Your Bet</button>
+          <Link
+            to={isAuthed ? "/dashboard" : "/signup"}
+            className="cta-submit"
+          >
+            {isAuthed ? "Dashboard" : "Get Started"}
+          </Link>
         </div>
       </section>
 
