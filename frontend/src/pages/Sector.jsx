@@ -295,8 +295,6 @@ export default function Sector() {
   const [markets, setMarkets]           = useState([]);
   const [status, setStatus]             = useState("loading");
   const [apiBadge, setApiBadge]         = useState({ text: "⬡ Fetching…", cls: "" });
-  const [rawUrl, setRawUrl]             = useState("—");
-  const [rawBody, setRawBody]           = useState("Waiting for response…");
   const [chatOpen, setChatOpen]         = useState(false);
   const [selectedMarket, setSelectedMarket] = useState(null);
 
@@ -309,14 +307,12 @@ export default function Sector() {
     const apiUrl  = `${API_BASE}/api/markets?limit=12${keyword ? "&keyword=" + encodeURIComponent(keyword) : ""}`;
 
     setStatus("loading"); setMarkets([]); setSelectedMarket(null);
-    setRawUrl(apiUrl); setRawBody("Calling API…");
     setApiBadge({ text: "⬡ Fetching…", cls: "" });
 
     try {
       const res  = await fetch(apiUrl);
       const data = await res.json();
       const raw  = JSON.stringify(data, null, 2);
-      setRawBody(raw.length > 900 ? raw.slice(0, 900) + `\n\n… (${raw.length - 900} more chars)` : raw);
       if (!data.success) { setApiBadge({ text: `✗ ${data.error || "API error"}`, cls: "err" }); setStatus("error"); return; }
       const list = data.markets || [];
       if (!list.length) { setApiBadge({ text: "✗ No markets returned", cls: "err" }); setStatus("empty"); return; }
@@ -324,7 +320,6 @@ export default function Sector() {
       setMarkets(list);
       setStatus("ok");
     } catch (err) {
-      setRawBody("Error: " + err.message);
       setApiBadge({ text: "✗ Server offline", cls: "err" });
       setStatus("error");
     }
@@ -346,7 +341,15 @@ export default function Sector() {
           ← Back to Home
         </Link>
       </div>
-
+      <div style={{ padding: ".5rem 2rem 0" }}>
+        <Link to="/hedge"
+          style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: ".7rem", letterSpacing: ".1em", color: "#666", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
+          onMouseEnter={(e) => e.currentTarget.style.color = G}
+          onMouseLeave={(e) => e.currentTarget.style.color = "#666"}
+        >
+          ⬡ Hedge Calculator
+        </Link>
+      </div>
       <div className="s-header">
         <div className="s-eyebrow">Live Data · Polymarket API</div>
         <h1 className="s-h1">Sector: <em>{sector.label}</em></h1>
@@ -362,14 +365,6 @@ export default function Sector() {
             {s.icon} {s.label}
           </button>
         ))}
-      </div>
-
-      <div className="s-raw-panel">
-        <div className="s-raw-header">
-          <span className="s-raw-label">⬡ Raw API Response</span>
-          <span className="s-raw-url">{rawUrl}</span>
-        </div>
-        <div className="s-raw-body">{rawBody}</div>
       </div>
 
       <div className="s-grid-wrap">
