@@ -5,6 +5,8 @@ import Constellation from "../components/Constellation";
 import SlotMachine from "../components/SlotMachine";
 import WinPopup from "../components/WinPopup";
 import Navbar from "../components/Navbar";
+import ChatWindow from "../components/ChatWindow";
+
 
 import {
   API,
@@ -1268,6 +1270,7 @@ export default function Landing() {
           ©️ 2025 Poly Hedge · All rights reserved
         </div>
       </footer>
+      <ChatWindow />
     </>
   );
 }

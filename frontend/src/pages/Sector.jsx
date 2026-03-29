@@ -3,6 +3,7 @@ import { useSearchParams, Link } from "react-router-dom";
 import "../styles/sector.css";
 import MarketCharts from "../components/MarketCharts";
 import CrossMarketScanner from "../components/CrossMarketScanner";
+import ChatWindow from "../components/ChatWindow";
 
 const API_BASE = "http://localhost:3001";
 const G        = "#c6a15b";
@@ -207,87 +208,7 @@ function MarketCard({ market, sectorKey, isSelected, onClick }) {
 }
 
 // ── Chat Window ───────────────────────────────────────────────────────────────
-function ChatWindow({ isOpen, onClose }) {
-  const [messages, setMessages] = useState([{
-    id: 0, type: "ai",
-    html: `Hey — tell me your market view and I'll find the alpha. Try: <strong>"I think the Fed cuts rates before July"</strong>`,
-  }]);
-  const [input, setInput]     = useState("");
-  const [sending, setSending] = useState(false);
-  const bottomRef = useRef(null);
-  const inputRef  = useRef(null);
-
-  useEffect(() => { if (isOpen) inputRef.current?.focus(); }, [isOpen]);
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
-
-  function push(html, type) {
-    setMessages((prev) => [...prev, { id: Date.now() + Math.random(), type, html }]);
-  }
-
-  async function send() {
-    const text = input.trim();
-    if (!text || sending) return;
-    setInput(""); setSending(true);
-    push(text, "user");
-    const thinkId = Date.now();
-    setMessages((prev) => [...prev, { id: thinkId, type: "thinking", html: "⬡ Analyzing…" }]);
-    try {
-      const mRes  = await fetch(`${API_BASE}/api/markets?keyword=${encodeURIComponent(text)}&limit=3`);
-      const mData = await mRes.json();
-      const mkts  = mData.markets || [];
-      if (!mkts.length) {
-        setMessages((prev) => prev.filter((m) => m.id !== thinkId));
-        push("No matching Polymarket markets found. Try a different topic.", "ai");
-        setSending(false); return;
-      }
-      const top   = mkts[0];
-      const aRes  = await fetch(`${API_BASE}/api/analyze-bet`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: top.question, yesPct: top.yesPct, side: "yes", amount: 100 }),
-      });
-      const aData = await aRes.json();
-      const list  = mkts.map((m) => `<strong>${m.question}</strong> — ${m.yesPct}% YES · ${m.volumeFmt}`).join("<br>");
-      setMessages((prev) => prev.filter((m) => m.id !== thinkId));
-      push(
-        `<strong style="color:var(--gold)">Markets found:</strong><br>${list}<br><br>` +
-        `<strong style="color:var(--gold)">K2 Analysis:</strong><br>${aData.analysis || "No analysis returned"}`,
-        "ai",
-      );
-    } catch {
-      setMessages((prev) => prev.filter((m) => m.id !== thinkId));
-      push("✗ Server offline — run: node server.js", "ai");
-    }
-    setSending(false);
-    inputRef.current?.focus();
-  }
-
-  function handleKey(e) {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
-  }
-
-  return (
-    <div className={`s-chat-window${isOpen ? " open" : ""}`}>
-      <div className="s-chat-head">
-        <span className="s-chat-head-title">K2 Alpha Analyst</span>
-        <button className="s-chat-close" onClick={onClose}>✕</button>
-      </div>
-      <div className="s-chat-hint">Ask about any market or your trade idea</div>
-      <div className="s-chat-messages">
-        {messages.map((msg) => (
-          <div key={msg.id} className={`s-msg ${msg.type}`} dangerouslySetInnerHTML={{ __html: msg.html }} />
-        ))}
-        <div ref={bottomRef} />
-      </div>
-      <div className="s-chat-input-row">
-        <textarea ref={inputRef} className="s-chat-input" rows={1}
-          placeholder="Your market view…" value={input}
-          onChange={(e) => setInput(e.target.value)} onKeyDown={handleKey} />
-        <button className="s-chat-send" onClick={send} disabled={sending}>ASK</button>
-      </div>
-    </div>
-  );
-}
-
+<ChatWindow />
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function Sector() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -299,7 +220,7 @@ export default function Sector() {
   const [selectedMarket, setSelectedMarket] = useState(null);
 
   const sector = SECTORS.find((s) => s.key === activeSector) || SECTORS[0];
-  const COLS   = 4;
+  const COLS   = 3;
 
   const loadMarkets = useCallback(async (sectorKey) => {
     const sec     = SECTORS.find((s) => s.key === sectorKey) || SECTORS[0];
@@ -404,11 +325,7 @@ export default function Sector() {
           })()}
         </div>
       </div>
-
-      <div className="s-chat-bubble">
-        <ChatWindow isOpen={chatOpen} onClose={() => setChatOpen(false)} />
-        <button className="s-chat-toggle" onClick={() => setChatOpen((v) => !v)} title="Ask K2 Analyst">⬡</button>
-      </div>
+      <ChatWindow />
     </>
   );
 }
