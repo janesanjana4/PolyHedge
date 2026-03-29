@@ -29,11 +29,11 @@ const NO = "#f87171";
 const BW = "rgba(198,161,91,0.28)";
 
 const KEYWORD_MAP = {
-  "":         "",
-  "politics": "president",
-  "finance":  "fed",
-  "crypto":   "bitcoin",
-  "sports":   "win",
+  "": "",
+  politics: "president",
+  finance: "fed",
+  crypto: "bitcoin",
+  sports: "win",
 };
 
 export default function Landing() {
@@ -225,7 +225,10 @@ export default function Landing() {
           </div>
           <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
             <button className="btn-primary">Place Your Bet</button>
-            <button className="btn-ghost">Learn More</button>
+
+            <Link to="/signup" className="btn-ghost">
+              Learn More
+            </Link>
           </div>
         </div>
 
